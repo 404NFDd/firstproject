@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 모델
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  password  String
+  image     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  // 관계
+  refreshTokens RefreshToken[]
+  newsBookmarks NewsBookmark[]
+  newsReadHistory NewsReadHistory[]
+  
+  @@index([email])
+}
+
+// Refresh Token 저장소
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+}
+
+// 뉴스 기사
+model News {
+  id            String   @id @default(cuid())
+  title         String   @db.LongText
+  description   String?  @db.LongText
+  content       String?  @db.LongText
+  imageUrl      String?  @db.Text
+  sourceUrl     String?  @db.Text
+  source        String
+  author        String?
+  publishedAt   DateTime
+  category      String   @default("general")
+  priority      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // 관계
+  bookmarks     NewsBookmark[]
+  readHistory   NewsReadHistory[]
+  
+  @@index([category])
+  @@index([publishedAt])
+  @@index([createdAt])
+}
+
+// 뉴스 즐겨찾기
+model NewsBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  newsId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, newsId])
+  @@index([userId])
+  @@index([newsId])
+}
+
+// 뉴스 읽음 이력
+model NewsReadHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  newsId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  readCount Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, newsId])
+  @@index([userId])
+  @@index([newsId])
+}
