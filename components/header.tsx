@@ -1,13 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu, X, Search, LogOut, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  const { theme, resolvedTheme, toggleTheme } = useTheme()
+
+  useEffect(() => {
+    let cancelled = false
+    const rafId = window.requestAnimationFrame(() => {
+      if (!cancelled) {
+        setMounted(true)
+      }
+    })
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(rafId)
+    }
+  }, [])
+
+  const activeTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : undefined
+  const isDarkMode = activeTheme ? activeTheme !== "light" : undefined
+  const toggleLabel = mounted ? `${isDarkMode ? "라이트" : "다크"} 모드로 전환` : "테마 모드 전환"
+  const ThemeIcon = mounted ? (
+    isDarkMode ? (
+      <Sun className="w-5 h-5" />
+    ) : (
+      <Moon className="w-5 h-5" />
+    )
+  ) : (
+    <span className="block w-5 h-5" aria-hidden="true" />
+  )
 
   return (
     <header className="sticky top-0 z-50 w-full glass">
@@ -56,12 +83,14 @@ export function Header() {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-background/50 transition text-foreground"
-            title={`${theme === "dark" ? "라이트" : "다크"} 모드로 전환`}
+            title={toggleLabel}
+            aria-label={toggleLabel}
+            suppressHydrationWarning
           >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {ThemeIcon}
           </button>
           <button
-            onClick={() => {}}
+            onClick={() => { }}
             className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2"
           >
             <LogOut className="w-4 h-4" />
@@ -74,9 +103,11 @@ export function Header() {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-background/50 transition text-foreground"
-            title={`${theme === "dark" ? "라이트" : "다크"} 모드로 전환`}
+            title={toggleLabel}
+            aria-label={toggleLabel}
+            suppressHydrationWarning
           >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {ThemeIcon}
           </button>
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-foreground">
             {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
