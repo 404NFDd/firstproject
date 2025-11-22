@@ -94,6 +94,19 @@ export default function NewsDetailPage() {
     }
   }
 
+  // HTML 엔티티 디코딩
+  const decodeHtmlEntities = (text: string | null | undefined): string => {
+    if (!text || typeof text !== "string") return ""
+    if (typeof window === "undefined") return text
+    const textarea = document.createElement("textarea")
+    textarea.innerHTML = text
+    return textarea.value || ""
+  }
+
+  const decodedTitle = news ? decodeHtmlEntities(news.title) : ""
+  const decodedDescription = news ? decodeHtmlEntities(news.description) : ""
+  const decodedContent = news ? decodeHtmlEntities(news.content) : ""
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -147,7 +160,7 @@ export default function NewsDetailPage() {
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">{news.title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">{decodedTitle}</h1>
 
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {news.author && <p>작성자: {news.author}</p>}
@@ -168,7 +181,7 @@ export default function NewsDetailPage() {
           <div className="relative w-full h-96 rounded-lg overflow-hidden mb-8 bg-muted">
             <Image
               src={news.imageUrl || "/placeholder.svg"}
-              alt={news.title}
+              alt={decodedTitle}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 768px"
@@ -179,9 +192,9 @@ export default function NewsDetailPage() {
 
         {/* Content */}
         <div className="prose prose-invert max-w-none mb-8">
-          {news.description && <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{news.description}</p>}
+          {decodedDescription && <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{decodedDescription}</p>}
 
-          {news.content && <div className="text-foreground leading-relaxed whitespace-pre-wrap">{news.content}</div>}
+          {decodedContent && <div className="text-foreground leading-relaxed whitespace-pre-wrap">{decodedContent}</div>}
         </div>
 
         {/* Source Link */}

@@ -31,14 +31,19 @@ export default function Dashboard() {
   }
 
   const fetchNews = useCallback(
-    async (pageNum: number, append = false) => {
+    async (pageNum: number, append = false, categoryOverride?: string) => {
       if (isLoadingMore.current) return
 
       isLoadingMore.current = true
       if (!append) setLoading(true)
 
       try {
-        const response = await fetch(`/api/news?page=${pageNum}&limit=12&category=${category}`)
+        // "general" 카테고리는 API에서 undefined로 전달 (모든 카테고리 조회)
+        const currentCategory = categoryOverride ?? category
+        const categoryParam = currentCategory === "general" ? undefined : currentCategory
+        const response = await fetch(
+          `/api/news?page=${pageNum}&limit=12${categoryParam ? `&category=${categoryParam}` : ""}`
+        )
         const data = await response.json()
 
         const newArticles = data.news || []
@@ -49,7 +54,10 @@ export default function Dashboard() {
           setNews(newArticles)
         }
 
-        setHasMore(newArticles.length === 12)
+        // 더 가져올 뉴스가 있는지 확인 (pagination 정보 사용)
+        const totalPages = data.pagination?.pages || 0
+        const currentPage = data.pagination?.page || pageNum
+        setHasMore(currentPage < totalPages && newArticles.length > 0)
         setPage(pageNum)
 
         // 뉴스가 없고 아직 동기화를 시도하지 않았다면 자동으로 수집 시도
@@ -118,17 +126,28 @@ export default function Dashboard() {
   }, [hasCheckedSync, news.length, loading, syncing, syncAttempted, syncNews])
 
   useEffect(() => {
-    fetchNews(1, false)
-  }, [category, fetchNews])
+    // 카테고리 변경 시 첫 페이지부터 다시 로드
+    setNews([])
+    setPage(1)
+    setHasMore(true)
+    fetchNews(1, false, category)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category])
 
   useEffect(() => {
+    // 로딩 중이거나 더 이상 가져올 뉴스가 없으면 관찰하지 않음
+    if (loading || !hasMore || news.length === 0) {
+      return
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore.current) {
-          fetchNews(page + 1, true)
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore.current && !loading) {
+          const nextPage = page + 1
+          fetchNews(nextPage, true, category)
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1, rootMargin: "100px" },
     )
 
     const target = observerTarget.current
@@ -141,7 +160,8 @@ export default function Dashboard() {
         observer.unobserve(target)
       }
     }
-  }, [page, hasMore, fetchNews])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, hasMore, loading, news.length, category])
 
   const handleSendEmail = async (newsId: string) => {
     try {

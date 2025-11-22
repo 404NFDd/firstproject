@@ -51,6 +51,18 @@ export function NewsCard({
     })
   }
 
+  // HTML 엔티티 디코딩
+  const decodeHtmlEntities = (text: string | null | undefined): string => {
+    if (!text || typeof text !== "string") return ""
+    if (typeof window === "undefined") return text
+    const textarea = document.createElement("textarea")
+    textarea.innerHTML = text
+    return textarea.value || ""
+  }
+
+  const decodedTitle = decodeHtmlEntities(title)
+  const decodedDescription = decodeHtmlEntities(description)
+
   return (
     <Link href={`/news/${id}`}>
       <article className="group h-full flex flex-col rounded-lg glass-effect overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
@@ -59,7 +71,7 @@ export function NewsCard({
           {imageUrl ? (
             <Image
               src={imageUrl || "/placeholder.svg"}
-              alt={title}
+              alt={decodedTitle}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -134,10 +146,12 @@ export function NewsCard({
           </div>
 
           <h3 className="text-sm sm:text-base font-bold text-foreground line-clamp-3 mb-2 group-hover:text-primary transition">
-            {title}
+            {decodedTitle}
           </h3>
 
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{description}</p>
+          {decodedDescription && (
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{decodedDescription}</p>
+          )}
 
           <div className="flex items-center justify-between">
             <time className="text-xs text-muted-foreground">{formatDate(publishedAt)}</time>

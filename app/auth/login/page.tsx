@@ -1,10 +1,20 @@
 import Link from "next/link"
 import { AuthForm } from "@/components/auth-form"
+import { ArrowLeft } from "lucide-react"
 
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md">
+        {/* Back to Home Button */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          메인으로 돌아가기
+        </Link>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-accent mb-4">
