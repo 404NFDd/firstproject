@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { generateAccessToken, generateRefreshToken, setTokenCookie } from "@/lib/auth"
+import { issueSessionTokens } from "@/lib/auth"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
@@ -33,30 +33,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 토큰 생성
-    const accessToken = await generateAccessToken({
-      userId: user.id,
-      email: user.email,
-    })
-
-    const refreshToken = await generateRefreshToken({
-      userId: user.id,
-      email: user.email,
-    })
-
-    // Refresh Token을 DB에 저장
-    const refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: refreshTokenExpires,
-      },
-    })
-
-    // 토큰을 쿠키에 저장
-    await setTokenCookie("accessToken", accessToken, 15 * 60)
-    await setTokenCookie("refreshToken", refreshToken, 7 * 24 * 60 * 60)
+    const tokens = await issueSessionTokens({ id: user.id, email: user.email })
 
     return NextResponse.json(
       {
@@ -65,6 +42,10 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           name: user.name,
+        },
+        tokens: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
         },
       },
       { status: 201 },

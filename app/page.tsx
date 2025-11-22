@@ -13,6 +13,9 @@ export default function Dashboard() {
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState("general")
   const [selectedNews, setSelectedNews] = useState<Set<string>>(new Set())
+  const [syncing, setSyncing] = useState(false)
+  const [hasCheckedSync, setHasCheckedSync] = useState(false)
+  const [syncAttempted, setSyncAttempted] = useState(false)
   const { toast } = useToast()
 
   const observerTarget = useRef<HTMLDivElement>(null)
@@ -23,6 +26,8 @@ export default function Dashboard() {
     setNews([])
     setPage(1)
     setHasMore(true)
+    setSyncAttempted(false)
+    setHasCheckedSync(false)
   }
 
   const fetchNews = useCallback(
@@ -46,6 +51,11 @@ export default function Dashboard() {
 
         setHasMore(newArticles.length === 12)
         setPage(pageNum)
+
+        // 뉴스가 없고 아직 동기화를 시도하지 않았다면 자동으로 수집 시도
+        if (!hasCheckedSync && newArticles.length === 0 && !append) {
+          setHasCheckedSync(true)
+        }
       } catch (error) {
         console.error("[v0] Error fetching news:", error)
         toast({
@@ -58,8 +68,54 @@ export default function Dashboard() {
         isLoadingMore.current = false
       }
     },
-    [category, toast],
+    [category, toast, hasCheckedSync],
   )
+
+  const syncNews = useCallback(async () => {
+    if (syncing) return
+
+    setSyncing(true)
+    setSyncAttempted(true)
+    try {
+      const response = await fetch("/api/news/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "뉴스 수집 실패")
+      }
+
+      toast({
+        title: "성공",
+        description: `뉴스 ${data.persisted}개를 수집했습니다.`,
+      })
+
+      // 수집 후 뉴스 다시 불러오기
+      await fetchNews(1, false)
+    } catch (error) {
+      console.error("[v0] Error syncing news:", error)
+      toast({
+        title: "오류",
+        description: error instanceof Error ? error.message : "뉴스 수집에 실패했습니다.",
+        variant: "destructive",
+      })
+    } finally {
+      setSyncing(false)
+    }
+  }, [syncing, toast, fetchNews])
+
+  // 뉴스가 없을 때 자동 수집 시도 (한 번만)
+  useEffect(() => {
+    if (hasCheckedSync && news.length === 0 && !loading && !syncing && !syncAttempted) {
+      const timer = setTimeout(() => {
+        syncNews()
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [hasCheckedSync, news.length, loading, syncing, syncAttempted, syncNews])
 
   useEffect(() => {
     fetchNews(1, false)
@@ -184,8 +240,8 @@ export default function Dashboard() {
                 key={cat.value}
                 onClick={() => handleCategoryChange(cat.value)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${category === cat.value
-                    ? "bg-primary text-primary-foreground"
-                    : "glass text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "glass text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {cat.label}
@@ -194,18 +250,39 @@ export default function Dashboard() {
           </div>
 
           <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
-            <div className="text-sm text-muted-foreground">
-              <a
-                href="/api/rss"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-accent hover:text-primary transition"
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="text-sm text-muted-foreground">
+                <a
+                  href="/api/rss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-accent hover:text-primary transition"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
+                  </svg>
+                  RSS 피드 구독
+                </a>
+              </div>
+              <button
+                onClick={syncNews}
+                disabled={syncing}
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
-                </svg>
-                RSS 피드 구독
-              </a>
+                {syncing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    수집 중...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    뉴스 수집
+                  </>
+                )}
+              </button>
             </div>
 
             {selectedNews.size > 0 && (
@@ -220,8 +297,52 @@ export default function Dashboard() {
 
           {/* News Grid */}
           {loading && news.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">
+                {syncing ? "뉴스를 수집하고 있습니다..." : "뉴스를 불러오는 중..."}
+              </p>
+            </div>
+          ) : news.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <svg
+                className="w-16 h-16 text-muted-foreground mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                />
+              </svg>
+              <h3 className="text-xl font-semibold text-foreground mb-2">뉴스가 없습니다</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                뉴스를 수집하려면 위의 "뉴스 수집" 버튼을 클릭하세요.
+                <br />
+                NewsAPI와 RSS 피드에서 최신 뉴스를 가져옵니다.
+              </p>
+              <button
+                onClick={syncNews}
+                disabled={syncing}
+                className="px-6 py-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+              >
+                {syncing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    수집 중...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    뉴스 수집 시작
+                  </>
+                )}
+              </button>
             </div>
           ) : (
             <>

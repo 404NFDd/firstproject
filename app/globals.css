@@ -135,10 +135,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     transition: background-color 0.3s ease, color 0.3s ease;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    margin: 0;
+    padding: 0;
   }
   h1,
   h2,

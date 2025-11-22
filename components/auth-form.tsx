@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Loader2 } from "lucide-react"
 
 interface AuthFormProps {
@@ -26,19 +27,40 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError("")
 
     try {
-      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register"
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "register" ? formData : { email: formData.email, password: formData.password }),
-      })
+      if (mode === "login") {
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "요청 실패")
+        if (result?.error) {
+          throw new Error(result.error)
+        }
+      } else {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || "회원가입 실패")
+        }
+
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        })
+
+        if (result?.error) {
+          throw new Error(result.error)
+        }
       }
 
-      router.push("/dashboard")
+      router.push("/")
     } catch (err: any) {
       setError(err.message)
     } finally {

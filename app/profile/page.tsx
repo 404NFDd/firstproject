@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { User, Mail, LogOut, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 interface UserProfile {
   id: string
@@ -41,12 +42,21 @@ export default function ProfilePage() {
     fetchUser()
   }, [router])
 
+  const redirectToLogin = async () => {
+    try {
+      await signOut({ callbackUrl: "/auth/login" })
+    } catch (error) {
+      console.error("Error while redirecting to login:", error)
+    }
+  }
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
-      router.push("/auth/login")
     } catch (error) {
       console.error("Error logging out:", error)
+    } finally {
+      await redirectToLogin()
     }
   }
 

@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react"
 import { Menu, X, Search, LogOut, Sun, Moon } from "lucide-react"
 import Link from "next/link"
+import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "@/components/theme-provider"
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const { data: session, status } = useSession()
   const { theme, resolvedTheme, toggleTheme } = useTheme()
 
   useEffect(() => {
@@ -35,6 +38,30 @@ export function Header() {
   ) : (
     <span className="block w-5 h-5" aria-hidden="true" />
   )
+
+  const redirectToLogin = async () => {
+    try {
+      await signOut({ callbackUrl: "/auth/login" })
+    } catch (error) {
+      console.error("Error while redirecting to login:", error)
+    }
+  }
+
+  const handleLogout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } catch (error) {
+      console.error("Error logging out:", error)
+    } finally {
+      await redirectToLogin()
+      setLoggingOut(false)
+    }
+  }
+
+  const userLabel = session?.user?.name || session?.user?.email || "사용자"
+  const userInitial = userLabel.charAt(0).toUpperCase()
 
   return (
     <header className="sticky top-0 z-50 w-full glass">
@@ -89,13 +116,29 @@ export function Header() {
           >
             {ThemeIcon}
           </button>
-          <button
-            onClick={() => { }}
-            className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">로그아웃</span>
-          </button>
+          {status === "authenticated" ? (
+            <>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-background/60">
+                <span className="text-xs font-semibold text-primary">{userInitial}</span>
+                <span className="text-sm text-muted-foreground max-w-[120px] truncate">{userLabel}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2 disabled:opacity-60"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">{loggingOut ? "로그아웃 중..." : "로그아웃"}</span>
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2"
+            >
+              로그인
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -139,6 +182,23 @@ export function Header() {
               </svg>
               RSS 구독
             </a>
+            {status === "authenticated" ? (
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2 disabled:opacity-60"
+              >
+                <LogOut className="w-4 h-4" />
+                로그아웃
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2"
+              >
+                로그인
+              </Link>
+            )}
           </nav>
         </div>
       )}

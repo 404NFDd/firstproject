@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { clearTokenCookie, verifyAccessToken } from "@/lib/auth"
+import { clearSessionCookies, verifyAccessToken, revokeUserRefreshTokens } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,15 +9,16 @@ export async function POST(request: NextRequest) {
     const payload = await verifyAccessToken(accessToken || "")
 
     if (payload) {
-      // DB에서 모든 Refresh Token 제거
-      await prisma.refreshToken.deleteMany({
-        where: { userId: payload.userId },
-      })
+      await revokeUserRefreshTokens(payload.userId)
+    } else {
+      // 토큰을 복호화할 수 없으면 쿠키 기반으로 사용자 탐색
+      const refreshToken = request.cookies.get("refreshToken")?.value
+      if (refreshToken) {
+        await prisma.refreshToken.deleteMany({ where: { token: refreshToken } })
+      }
     }
 
-    // 쿠키 제거
-    await clearTokenCookie("accessToken")
-    await clearTokenCookie("refreshToken")
+    await clearSessionCookies()
 
     return NextResponse.json({ message: "로그아웃이 완료되었습니다." }, { status: 200 })
   } catch (error) {

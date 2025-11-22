@@ -26,6 +26,32 @@ export default function NewsDetailPage() {
   const [loading, setLoading] = useState(true)
   const [bookmarked, setBookmarked] = useState(false)
 
+  // 페이지 로드 시 스크롤을 최상단으로 강제 이동
+  useEffect(() => {
+    // 즉시 스크롤을 최상단으로 이동
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+
+    // 약간의 지연 후 다시 확인 (레이아웃 시프트 대응)
+    const timer1 = setTimeout(() => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }, 0)
+
+    const timer2 = setTimeout(() => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }, 100)
+
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
+  }, [params.id])
+
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -39,6 +65,10 @@ export default function NewsDetailPage() {
         console.error("Error fetching news:", error)
       } finally {
         setLoading(false)
+        // 데이터 로드 후에도 스크롤 위치 확인
+        window.scrollTo(0, 0)
+        document.documentElement.scrollTop = 0
+        document.body.scrollTop = 0
       }
     }
 
@@ -89,7 +119,7 @@ export default function NewsDetailPage() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Back Button */}
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-primary hover:underline mb-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-primary hover:underline mb-6">
           <ArrowLeft className="w-4 h-4" />
           뉴스 목록으로
         </Link>
