@@ -138,23 +138,38 @@ async function fetchImageFromUrl(url: string): Promise<string | undefined> {
     }
 
     const html = await response.text()
+    const baseUrl = new URL(url) // 원본 URL의 base URL
+
+    // 상대 경로를 절대 URL로 변환하는 헬퍼 함수
+    const resolveUrl = (imageUrl: string): string => {
+      // 이미 절대 URL이면 그대로 반환
+      if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+        return imageUrl
+      }
+      // 상대 경로면 base URL과 결합
+      try {
+        return new URL(imageUrl, baseUrl.origin).href
+      } catch {
+        return imageUrl
+      }
+    }
 
     // Open Graph 이미지 추출
     const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
     if (ogImageMatch && ogImageMatch[1]) {
-      return ogImageMatch[1].trim()
+      return resolveUrl(ogImageMatch[1].trim())
     }
 
     // Twitter Card 이미지 추출 (대체)
     const twitterImageMatch = html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i)
     if (twitterImageMatch && twitterImageMatch[1]) {
-      return twitterImageMatch[1].trim()
+      return resolveUrl(twitterImageMatch[1].trim())
     }
 
     // 일반 이미지 메타 태그 추출
     const imageMatch = html.match(/<meta\s+name=["']image["']\s+content=["']([^"']+)["']/i)
     if (imageMatch && imageMatch[1]) {
-      return imageMatch[1].trim()
+      return resolveUrl(imageMatch[1].trim())
     }
 
     return undefined
