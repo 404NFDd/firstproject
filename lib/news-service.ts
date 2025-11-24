@@ -97,6 +97,89 @@ const normalizeCategory = (category?: string | null): NewsCategory => {
 
 const sanitizeString = (value?: string | null) => value?.trim() || undefined
 
+// 간단한 한국어 감지 함수 (한글 유니코드 범위 체크)
+function isKorean(text: string): boolean {
+  // 한글 유니코드 범위: AC00-D7AF (완성형), 1100-11FF (자모), 3130-318F (호환 자모)
+  const koreanRegex = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/
+  return koreanRegex.test(text)
+}
+
+// Google Cloud Translation API를 사용하여 텍스트를 한국어로 번역
+export async function translateToKorean(text: string | undefined | null): Promise<string | undefined> {
+  if (!text || !text.trim()) return undefined
+
+  // 이미 한국어인 경우 번역하지 않음
+  if (isKorean(text)) {
+    return text
+  }
+
+  const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY
+  if (!apiKey) {
+    console.warn("⚠️  GOOGLE_TRANSLATE_API_KEY가 설정되지 않아 번역을 건너뜁니다.")
+    return text // 번역 실패 시 원문 반환
+  }
+
+  try {
+    // Google Cloud Translation API v2 REST API 사용
+    // 문서 참고: https://docs.cloud.google.com/translate/docs/reference/rpc/google.cloud.translate.v2
+    // q는 배열로 전달 (최대 128개), format은 "text" (plain text)
+    const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        q: [text], // TranslateTextRequest.q[] - 배열로 전달 (최대 128개)
+        target: "ko", // TranslateTextRequest.target - 타겟 언어 (필수)
+        format: "text", // TranslateTextRequest.format - "html" 또는 "text" (기본값: "html")
+        // source는 생략하면 자동 감지 (TranslateTextRequest.source - 선택사항)
+      }),
+      signal: AbortSignal.timeout(10000), // 10초 타임아웃
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "")
+      console.error(`⚠️  번역 API 요청 실패: ${response.status} ${response.statusText}`)
+      if (errorText) {
+        try {
+          const errorData = JSON.parse(errorText)
+          console.error(`   오류 내용:`, errorData.error?.message || errorText.substring(0, 200))
+        } catch {
+          console.error(`   응답 내용: ${errorText.substring(0, 200)}`)
+        }
+      }
+      return text // 번역 실패 시 원문 반환
+    }
+
+    const data = await response.json()
+
+    // 에러 응답 체크
+    if (data.error) {
+      console.error(`⚠️  번역 API 오류:`, data.error)
+      return text
+    }
+
+    // TranslateTextResponse 형식: data.translations[].translated_text
+    // REST API는 snake_case를 사용할 수 있으므로 두 가지 형식 모두 확인
+    const translation = data?.data?.translations?.[0]
+    const translatedText = translation?.translated_text || translation?.translatedText
+
+    if (translatedText) {
+      return translatedText
+    }
+
+    return text // 번역 결과가 없으면 원문 반환
+  } catch (error) {
+    console.error("⚠️  번역 중 오류 발생:", error)
+    if (error instanceof Error) {
+      console.error(`   오류 메시지: ${error.message}`)
+    }
+    return text // 오류 발생 시 원문 반환
+  }
+}
+
 // HTML 태그 제거 및 텍스트만 추출
 const stripHtmlTags = (html?: string | null): string | undefined => {
   if (!html) return undefined
@@ -232,6 +315,7 @@ async function persistArticles(articles: NormalizedArticle[]): Promise<NewsInges
         publishedAt: article.publishedAt,
         category: article.category,
         priority: article.priority,
+        isTranslated: article.source === "NewsAPI" ? 1 : 0, // NewsAPI에서 가져온 기사는 번역 완료로 표시
       },
     })
     persisted += 1
@@ -261,7 +345,8 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
     const data = await response.json()
     const articles = (data.articles || []) as any[]
 
-    const validArticles = articles
+    // 먼저 모든 기사의 원문을 수집
+    const rawArticles = articles
       .map((item) => {
         const title = stripHtmlTags(item.title) || sanitizeString(item.title)
         const sourceUrl = sanitizeString(item.url)
@@ -270,7 +355,7 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
           return null
         }
 
-        const base: Omit<NormalizedArticle, "priority"> = {
+        return {
           title,
           description: stripHtmlTags(item.description) || sanitizeString(item.description),
           content: stripHtmlTags(item.content) || sanitizeString(item.content),
@@ -281,12 +366,26 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
           publishedAt: item.publishedAt ? new Date(item.publishedAt) : new Date(),
           category: options.category,
         }
-
-        return base
       })
       .filter((item): item is Omit<NormalizedArticle, "priority"> => item !== null)
 
-    return validArticles.map((base) => ({
+    // 모든 기사의 제목과 내용을 병렬로 번역
+    const translatedArticles = await Promise.all(
+      rawArticles.map(async (article) => {
+        const translatedTitle = await translateToKorean(article.title)
+        const translatedDescription = await translateToKorean(article.description)
+        const translatedContent = await translateToKorean(article.content)
+
+        return {
+          ...article,
+          title: translatedTitle || article.title,
+          description: translatedDescription || article.description,
+          content: translatedContent || article.content,
+        }
+      })
+    )
+
+    return translatedArticles.map((base) => ({
       ...base,
       priority: calculatePriority(base),
     }))

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `news` ADD COLUMN `isTranslated` INTEGER NOT NULL DEFAULT 0;

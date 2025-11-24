@@ -50,6 +50,7 @@ model News {
   publishedAt   DateTime
   category      String   @default("general")
   priority      Int      @default(0)
+  isTranslated  Int      @default(0) // 0: 미번역, 1: 번역 완료
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
