@@ -50,7 +50,7 @@ export function NewsCard({
   const decodedDescription = decodeHtmlEntities(description)
 
   return (
-    <Link href={`/news/${id}`}>
+    <Link href={`/news/${id}`} target="_blank" rel="noopener noreferrer">
       <article className="group h-full flex flex-col rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
         {/* Image */}
         <div className="relative w-full h-40 sm:h-48 overflow-hidden bg-muted">
