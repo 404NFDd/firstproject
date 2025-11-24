@@ -10,9 +10,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const news = await prisma.news.findUnique({
       where: { id },
-      include: {
-        bookmarks: payload ? { where: { userId: payload.userId } } : false,
-      },
     })
 
     if (!news) {

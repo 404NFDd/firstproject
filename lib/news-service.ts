@@ -14,6 +14,7 @@ export const SUPPORTED_NEWS_CATEGORIES = [
   "science",
   "sports",
   "technology",
+  "developer",
 ] as const
 
 type NewsCategory = (typeof SUPPORTED_NEWS_CATEGORIES)[number]
@@ -27,6 +28,7 @@ const NAVER_CATEGORY_QUERIES: Record<NewsCategory, string[]> = {
   science: ["과학", "기술", "연구"],
   sports: ["스포츠", "운동", "경기"],
   technology: ["IT", "기술", "테크", "소프트웨어"],
+  developer: ["개발자", "프로그래밍", "코딩", "소프트웨어 개발", "개발 이슈", "프로그래머", "개발자 뉴스"],
 }
 
 const CATEGORY_PRIORITY_WEIGHT: Record<string, number> = {
@@ -37,6 +39,7 @@ const CATEGORY_PRIORITY_WEIGHT: Record<string, number> = {
   science: 7,
   sports: 5,
   technology: 9,
+  developer: 9,
 }
 
 const RSS_FEEDS = [
@@ -44,6 +47,8 @@ const RSS_FEEDS = [
   { category: "business", url: "https://feeds.bbci.co.uk/news/business/rss.xml" },
   { category: "science", url: "https://www.sciencemag.org/rss/news_current.xml" },
   { category: "general", url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" },
+  { category: "developer", url: "https://dev.to/feed" },
+  { category: "developer", url: "https://news.ycombinator.com/rss" },
 ]
 
 const xmlParser = new XMLParser({
@@ -97,6 +102,21 @@ const normalizeCategory = (category?: string | null): NewsCategory => {
 
 const sanitizeString = (value?: string | null) => value?.trim() || undefined
 
+// 개발자 관련 키워드 감지 함수
+function detectDeveloperCategory(article: { title: string; description?: string; content?: string }): boolean {
+  const keywords = [
+    "개발자", "프로그래밍", "코딩", "소프트웨어 개발", "개발 이슈", "프로그래머", "개발자 뉴스",
+    "developer", "programming", "coding", "software engineer", "software development",
+    "프론트엔드", "백엔드", "풀스택", "frontend", "backend", "fullstack",
+    "알고리즘", "데이터구조", "algorithm", "data structure",
+    "개발 도구", "IDE", "에디터", "개발 환경",
+    "오픈소스", "open source", "github", "git",
+    "스타트업 개발", "스타트업 기술", "startup tech",
+  ]
+  const text = `${article.title} ${article.description || ""} ${article.content || ""}`.toLowerCase()
+  return keywords.some((keyword) => text.includes(keyword.toLowerCase()))
+}
+
 // 간단한 한국어 감지 함수 (한글 유니코드 범위 체크)
 function isKorean(text: string): boolean {
   // 한글 유니코드 범위: AC00-D7AF (완성형), 1100-11FF (자모), 3130-318F (호환 자모)
@@ -120,6 +140,15 @@ export async function translateToKorean(text: string | undefined | null): Promis
   }
 
   try {
+    // 개행 문자를 임시 마커로 치환하여 보존
+    const NEWLINE_MARKER = "___NEWLINE___"
+    const DOUBLE_NEWLINE_MARKER = "___DOUBLE_NEWLINE___"
+
+    // 연속된 개행을 먼저 처리
+    let textWithMarkers = text.replace(/\n\n+/g, DOUBLE_NEWLINE_MARKER)
+    // 단일 개행 처리
+    textWithMarkers = textWithMarkers.replace(/\n/g, NEWLINE_MARKER)
+
     // Google Cloud Translation API v2 REST API 사용
     // 문서 참고: https://docs.cloud.google.com/translate/docs/reference/rpc/google.cloud.translate.v2
     // q는 배열로 전달 (최대 128개), format은 "text" (plain text)
@@ -131,7 +160,7 @@ export async function translateToKorean(text: string | undefined | null): Promis
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: [text], // TranslateTextRequest.q[] - 배열로 전달 (최대 128개)
+        q: [textWithMarkers], // TranslateTextRequest.q[] - 배열로 전달 (최대 128개)
         target: "ko", // TranslateTextRequest.target - 타겟 언어 (필수)
         format: "text", // TranslateTextRequest.format - "html" 또는 "text" (기본값: "html")
         // source는 생략하면 자동 감지 (TranslateTextRequest.source - 선택사항)
@@ -167,7 +196,12 @@ export async function translateToKorean(text: string | undefined | null): Promis
     const translatedText = translation?.translated_text || translation?.translatedText
 
     if (translatedText) {
-      return translatedText
+      // 마커를 다시 개행 문자로 복원
+      let restoredText = translatedText
+        .replace(new RegExp(DOUBLE_NEWLINE_MARKER, "g"), "\n\n")
+        .replace(new RegExp(NEWLINE_MARKER, "g"), "\n")
+
+      return restoredText
     }
 
     return text // 번역 결과가 없으면 원문 반환
@@ -385,14 +419,103 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
       })
     )
 
-    return translatedArticles.map((base) => ({
-      ...base,
-      priority: calculatePriority(base),
-    }))
+    // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
+    const categorizedArticles = translatedArticles.map((base) => {
+      const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
+      return {
+        ...base,
+        category: finalCategory,
+        priority: calculatePriority({ ...base, category: finalCategory }),
+      }
+    })
+
+    return categorizedArticles
   } catch (error) {
     console.error("Error fetching news from NewsAPI:", error)
     return []
   }
+}
+
+// Retry-After 헤더 파싱 헬퍼 함수
+// Retry-After는 정수(초) 또는 HTTP 날짜 형식을 가질 수 있음
+function parseRetryAfter(retryAfter: string | null): number | null {
+  if (!retryAfter) return null
+
+  const trimmed = retryAfter.trim()
+
+  // 정수 형식인지 확인 (숫자로만 구성)
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = Number.parseInt(trimmed, 10)
+    return isNaN(seconds) ? null : seconds * 1000 // 밀리초로 변환
+  }
+
+  // HTTP 날짜 형식인지 확인 (예: "Wed, 21 Oct 2015 07:28:00 GMT")
+  const dateValue = Date.parse(trimmed)
+  if (!isNaN(dateValue)) {
+    const now = Date.now()
+    const waitTime = dateValue - now
+    // 과거 날짜이거나 너무 큰 값이면 null 반환
+    return waitTime > 0 && waitTime < 86400000 ? waitTime : null // 최대 24시간
+  }
+
+  return null
+}
+
+// 네이버 API 요청 재시도 헬퍼 함수
+async function fetchWithRetry(
+  url: URL,
+  headers: Record<string, string>,
+  maxRetries = 3,
+  baseDelay = 1000
+): Promise<Response | null> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers,
+        next: { revalidate: 60 },
+      })
+
+      if (response.status === 429) {
+        // Rate limit 초과 시 대기 시간 계산 (exponential backoff)
+        const delay = baseDelay * Math.pow(2, attempt)
+        const retryAfter = response.headers.get("Retry-After")
+        const parsedWaitTime = parseRetryAfter(retryAfter)
+        const waitTime = parsedWaitTime ?? delay
+
+        // waitTime이 유효한지 확인 (NaN이 아닌지)
+        if (isNaN(waitTime) || waitTime <= 0) {
+          console.warn(`⚠️  네이버 API 요청 한도 초과 (429). Retry-After 헤더를 파싱할 수 없어 기본 딜레이(${delay / 1000}초)를 사용합니다.`)
+          if (attempt < maxRetries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            continue
+          } else {
+            console.warn(`⚠️  네이버 API 요청 한도 초과 (429). 최대 재시도 횟수 초과.`)
+            return null
+          }
+        }
+
+        if (attempt < maxRetries - 1) {
+          console.warn(`⚠️  네이버 API 요청 한도 초과 (429). ${waitTime / 1000}초 후 재시도... (${attempt + 1}/${maxRetries})`)
+          await new Promise((resolve) => setTimeout(resolve, waitTime))
+          continue
+        } else {
+          console.warn(`⚠️  네이버 API 요청 한도 초과 (429). 최대 재시도 횟수 초과.`)
+          return null
+        }
+      }
+
+      return response
+    } catch (error) {
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt)
+        console.warn(`⚠️  네이버 API 요청 오류. ${delay / 1000}초 후 재시도... (${attempt + 1}/${maxRetries})`)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        continue
+      }
+      throw error
+    }
+  }
+  return null
 }
 
 async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: number }): Promise<NormalizedArticle[]> {
@@ -408,7 +531,14 @@ async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: num
   const limitPerQuery = Math.ceil((options.limit ?? 20) / queries.length)
   const aggregated: NormalizedArticle[] = []
 
-  for (const query of queries) {
+  for (let i = 0; i < queries.length; i++) {
+    const query = queries[i]
+
+    // 요청 간 딜레이 추가 (첫 번째 요청 제외, 네이버 API rate limit 방지)
+    if (i > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 500)) // 500ms 딜레이
+    }
+
     try {
       const url = new URL(NAVER_SEARCH_API_ENDPOINT)
       url.searchParams.set("query", query)
@@ -416,18 +546,23 @@ async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: num
       url.searchParams.set("start", "1")
       url.searchParams.set("sort", "sim") // 정확도순
 
-      const response = await fetch(url, {
-        headers: {
-          "X-Naver-Client-Id": clientId,
-          "X-Naver-Client-Secret": clientSecret,
-        },
-        next: { revalidate: 60 },
-      })
+      const headers = {
+        "X-Naver-Client-Id": clientId,
+        "X-Naver-Client-Secret": clientSecret,
+      }
+
+      const response = await fetchWithRetry(url, headers)
+
+      if (!response) {
+        // 재시도 실패 시 해당 쿼리 건너뛰기
+        continue
+      }
 
       if (!response.ok) {
         if (response.status === 403) {
           console.warn(`⚠️  네이버 검색 API 권한이 없습니다. 개발자 센터에서 검색 API를 활성화해주세요.`)
-        } else {
+        } else if (response.status !== 429) {
+          // 429는 이미 fetchWithRetry에서 처리됨
           console.warn(`⚠️  네이버 검색 API 요청 실패: ${response.status}`)
         }
         continue
@@ -474,9 +609,12 @@ async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: num
       )
 
       for (const base of validItems) {
+        // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
+        const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
         aggregated.push({
           ...base,
-          priority: calculatePriority(base),
+          category: finalCategory,
+          priority: calculatePriority({ ...base, category: finalCategory }),
         })
       }
     } catch (error) {
@@ -527,9 +665,12 @@ async function fetchFromRssFeeds(limitPerFeed = 10): Promise<NormalizedArticle[]
           category: feed.category,
         }
 
+        // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
+        const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
         aggregated.push({
           ...base,
-          priority: calculatePriority(base),
+          category: finalCategory,
+          priority: calculatePriority({ ...base, category: finalCategory }),
         })
       }
     } catch (error) {
@@ -651,7 +792,6 @@ export async function getNewsDetail(newsId: string) {
     return await prisma.news.findUnique({
       where: { id: newsId },
       include: {
-        bookmarks: true,
         readHistory: true,
       },
     })
@@ -663,34 +803,4 @@ export async function getNewsDetail(newsId: string) {
 
 export async function searchNews(query: string, page = 1, limit = 10) {
   return getNews({ search: query, page, limit })
-}
-
-export async function getUserBookmarks(userId: string, page = 1, limit = 10) {
-  try {
-    const skip = (page - 1) * limit
-
-    const [bookmarks, total] = await Promise.all([
-      prisma.newsBookmark.findMany({
-        where: { userId },
-        include: { news: true },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.newsBookmark.count({ where: { userId } }),
-    ])
-
-    return {
-      bookmarks: bookmarks.map((b) => b.news),
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    }
-  } catch (error) {
-    console.error("Error getting user bookmarks:", error)
-    return { bookmarks: [], pagination: { total: 0, page: 1, limit, pages: 0 } }
-  }
 }

@@ -236,6 +236,7 @@ export default function Dashboard() {
     { value: "general", label: "전체" },
     { value: "business", label: "비즈니스" },
     { value: "technology", label: "기술" },
+    { value: "developer", label: "개발자" },
     { value: "entertainment", label: "엔터테인먼트" },
     { value: "health", label: "건강" },
     { value: "sports", label: "스포츠" },

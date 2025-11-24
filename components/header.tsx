@@ -77,9 +77,6 @@ export function Header() {
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
             대시보드
           </Link>
-          <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground transition">
-            즐겨찾기
-          </Link>
           <Link href="/profile" className="text-sm text-muted-foreground hover:text-foreground transition">
             프로필
           </Link>
@@ -164,9 +161,6 @@ export function Header() {
           <nav className="flex flex-col gap-4 p-4">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
               대시보드
-            </Link>
-            <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground transition">
-              즐겨찾기
             </Link>
             <Link href="/profile" className="text-sm text-muted-foreground hover:text-foreground transition">
               프로필

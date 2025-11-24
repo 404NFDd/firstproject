@@ -19,7 +19,6 @@ model User {
   
   // 관계
   refreshTokens RefreshToken[]
-  newsBookmarks NewsBookmark[]
   newsReadHistory NewsReadHistory[]
   
   @@index([email])
@@ -55,26 +54,11 @@ model News {
   updatedAt     DateTime @updatedAt
   
   // 관계
-  bookmarks     NewsBookmark[]
   readHistory   NewsReadHistory[]
   
   @@index([category])
   @@index([publishedAt])
   @@index([createdAt])
-}
-
-// 뉴스 즐겨찾기
-model NewsBookmark {
-  id        String   @id @default(cuid())
-  userId    String
-  newsId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  
-  @@unique([userId, newsId])
-  @@index([userId])
-  @@index([newsId])
 }
 
 // 뉴스 읽음 이력

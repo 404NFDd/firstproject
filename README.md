@@ -13,7 +13,6 @@
 - **사용자 인증** - Next-Auth를 이용한 안전한 로그인/회원가입
 - **토큰 관리** - Access Token (15분) & Refresh Token (7일)
 - **뉴스 검색 및 필터** - 카테고리별 뉴스 필터링
-- **즐겨찾기** - 관심 뉴스 저장 및 관리
 - **사용자 프로필** - 프로필 편집 및 설정
 - **어두운 테마** - 눈에 편한 다크 모드 기본 적용
 
@@ -135,11 +134,6 @@ npm run dev
 - 최신 뉴스 확인
 - 카테고리별로 필터링
 - 뉴스 상세 보기
-- 즐겨찾기 추가
-
-### 즐겨찾기 관리
-- `/bookmarks`에서 저장한 뉴스 확인
-- 뉴스 카드에서 북마크 추가/제거
 
 ### 프로필 관리
 - `/profile`에서 프로필 편집
@@ -156,7 +150,6 @@ npm run dev
 │   │   └── news/           # 뉴스 API
 │   ├── auth/               # 인증 페이지
 │   ├── news/               # 뉴스 상세 페이지
-│   ├── bookmarks/          # 즐겨찾기 페이지
 │   ├── profile/            # 프로필 페이지
 │   ├── layout.tsx          # 레이아웃
 │   ├── page.tsx            # 메인 대시보드
@@ -179,10 +172,9 @@ npm run dev
 
 | 모델 | 핵심 필드 | 설명 |
 | --- | --- | --- |
-| `User` | `email`, `password`, `image`, `createdAt` | 회원 기본 정보와 프로필 이미지를 저장하며 RefreshToken·즐겨찾기·읽음 이력과 관계를 맺습니다. |
+| `User` | `email`, `password`, `image`, `createdAt` | 회원 기본 정보와 프로필 이미지를 저장하며 RefreshToken·읽음 이력과 관계를 맺습니다. |
 | `RefreshToken` | `token`, `expiresAt`, `userId` | Refresh Token을 영속화해 강제 로그아웃·감사 추적을 지원합니다. |
-| `News` | `title`, `content`, `imageUrl`, `sourceUrl`, `category`, `publishedAt`, `priority` | 외부 데이터 소스에서 적재한 기사로 즐겨찾기/읽음 이력과 연결되며 추천·AI 요약의 기본 재료입니다. |
-| `NewsBookmark` | `userId`, `newsId`, `createdAt` | 사용자↔뉴스 다대다 연결 테이블이며 `@@unique([userId, newsId])`로 중복을 방지합니다. |
+| `News` | `title`, `content`, `imageUrl`, `sourceUrl`, `category`, `publishedAt`, `priority` | 외부 데이터 소스에서 적재한 기사로 읽음 이력과 연결되며 추천·AI 요약의 기본 재료입니다. |
 | `NewsReadHistory` | `userId`, `newsId`, `readCount`, `updatedAt` | 사용자의 열람 기록을 집계해 개인화 추천과 아침 브리핑 우선순위를 계산합니다. |
 
 ## 🔐 보안 기능
@@ -211,9 +203,6 @@ npm run dev
 ### 뉴스
 - `GET /api/news` - 뉴스 목록 (페이지네이션, 필터링)
 - `GET /api/news/[id]` - 뉴스 상세
-- `GET /api/news/bookmarks` - 즐겨찾기 목록
-- `POST /api/news/bookmark` - 북마크 추가
-- `DELETE /api/news/bookmark` - 북마크 제거
 - `POST /api/news/sync` - 배치 수집 트리거 (Vercel Cron, `x-cron-secret` 헤더 지원)
 
 ## ⏱️ 데이터 파이프라인 & 스케줄링
@@ -237,7 +226,7 @@ npm run dev
   3. 한 이메일 안에 "오늘의 주요 뉴스 브리핑" 형태로 정리 후 발송
 
 - 구현 계획:
-  - `News`, `NewsBookmark`, `NewsReadHistory`를 조합해 사용자별 가중치를 계산하고, Prisma에서 지난 24시간 기사를 우선순위 큐로 가져옵니다.
+  - `News`, `NewsReadHistory`를 조합해 사용자별 가중치를 계산하고, Prisma에서 지난 24시간 기사를 우선순위 큐로 가져옵니다.
   - 사용자 프로필에 저장된 타임존을 UTC로 환산해 Vercel Cron(또는 자체 배치 서버)에서 매일 07:00 잡을 등록합니다.
   - `lib/ai-summary.ts` 모듈(추가 예정)에서 OpenAI/Azure OpenAI/Claude 등 LLM 프로바이더를 래핑해 카테고리별 bullet 요약, 주요 수치, 인용문을 생성합니다.
   - 요약 결과를 `templates/email/daily-briefing.html` 템플릿에 주입하고 Nodemailer/Resend로 발송, `EmailDigestLog` (예정) 모델에 성공/실패 로그를 남겨 중복 발송을 방지합니다.

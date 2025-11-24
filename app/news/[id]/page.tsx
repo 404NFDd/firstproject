@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { Header } from "@/components/header"
-import { ArrowLeft, Bookmark, BookmarkCheck, Share2, Loader2 } from "lucide-react"
+import { ArrowLeft, Share2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -17,14 +17,12 @@ interface NewsDetail {
   source: string
   author?: string
   publishedAt: string
-  bookmarks: any[]
 }
 
 export default function NewsDetailPage() {
   const params = useParams()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [loading, setLoading] = useState(true)
-  const [bookmarked, setBookmarked] = useState(false)
 
   // 페이지 로드 시 스크롤을 최상단으로 강제 이동
   useEffect(() => {
@@ -59,7 +57,6 @@ export default function NewsDetailPage() {
         if (response.ok) {
           const data = await response.json()
           setNews(data)
-          setBookmarked(data.bookmarks?.length > 0)
         }
       } catch (error) {
         console.error("Error fetching news:", error)
@@ -77,22 +74,6 @@ export default function NewsDetailPage() {
     }
   }, [params.id])
 
-  const handleBookmark = async () => {
-    try {
-      if (bookmarked) {
-        await fetch(`/api/news/bookmark?newsId=${news?.id}`, { method: "DELETE" })
-      } else {
-        await fetch("/api/news/bookmark", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newsId: news?.id }),
-        })
-      }
-      setBookmarked(!bookmarked)
-    } catch (error) {
-      console.error("Error bookmarking:", error)
-    }
-  }
 
   // HTML 엔티티 디코딩
   const decodeHtmlEntities = (text: string | null | undefined): string => {
@@ -144,16 +125,6 @@ export default function NewsDetailPage() {
               {news.source}
             </span>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleBookmark}
-                className="p-2 rounded-lg border border-border bg-card hover:bg-input transition"
-              >
-                {bookmarked ? (
-                  <BookmarkCheck className="w-5 h-5 text-primary" />
-                ) : (
-                  <Bookmark className="w-5 h-5 text-muted-foreground" />
-                )}
-              </button>
               <button className="p-2 rounded-lg border border-border bg-card hover:bg-input transition">
                 <Share2 className="w-5 h-5 text-muted-foreground" />
               </button>
