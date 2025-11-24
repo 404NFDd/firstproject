@@ -65,7 +65,7 @@ export function NewsCard({
 
   return (
     <Link href={`/news/${id}`}>
-      <article className="group h-full flex flex-col rounded-lg glass-effect overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
+      <article className="group h-full flex flex-col rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
         {/* Image */}
         <div className="relative w-full h-40 sm:h-48 overflow-hidden bg-muted">
           {imageUrl ? (

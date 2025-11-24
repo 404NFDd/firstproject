@@ -5,9 +5,9 @@
 
 :root {
   /* Light mode colors (Preserved from user's globals.css) */
-  --background: #ffffff;
+  --background: #faf8f3;
   --foreground: #0f1419;
-  --card: #f8fafb;
+  --card: #ede8df;
   --card-foreground: #0f1419;
   --primary: #00d9ff;
   --primary-foreground: #0f1419;
@@ -39,9 +39,9 @@
 }
 
 .light {
-  --background: #ffffff;
+  --background: #ede8df;
   --foreground: #0f1419;
-  --card: #f8fafb;
+  --card: #faf8f3;
   --card-foreground: #0f1419;
   --primary: #00d9ff;
   --primary-foreground: #0f1419;
@@ -135,11 +135,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     overscroll-behavior: none;
     overscroll-behavior-y: none;
     overflow-x: hidden;
   }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -149,6 +151,7 @@
     margin: 0;
     padding: 0;
   }
+
   h1,
   h2,
   h3,
