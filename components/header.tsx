@@ -169,14 +169,19 @@ export function Header() {
               <button
                 onClick={handleEmailButtonClick}
                 disabled={togglingEmail}
-                className={`text-sm transition-all duration-200 flex items-center gap-1 ${emailSubscribed
+                className={`text-sm transition-all duration-200 flex flex-col items-center gap-0.5 ${emailSubscribed
                     ? "text-primary hover:text-accent"
                     : "text-muted-foreground hover:text-foreground"
                   } disabled:opacity-60 disabled:cursor-not-allowed`}
                 title={emailSubscribed ? "메일 구독 해제" : "메일 구독"}
               >
-                <Mail className={`w-4 h-4 transition-all duration-200 ${emailSubscribed ? "fill-current" : ""}`} />
-                <span className="hidden lg:inline">메일</span>
+                <div className="flex items-center gap-1">
+                  <Mail className="w-4 h-4" />
+                  <span className="hidden lg:inline">메일</span>
+                </div>
+                {emailSubscribed && (
+                  <span className="text-[10px] text-muted-foreground leading-none">구독중</span>
+                )}
               </button>
               <AlertDialog open={showSubscribeDialog} onOpenChange={setShowSubscribeDialog}>
                 <AlertDialogContent>
@@ -287,13 +292,18 @@ export function Header() {
               <button
                 onClick={handleEmailButtonClick}
                 disabled={togglingEmail}
-                className={`text-sm transition-all duration-200 flex items-center gap-2 ${emailSubscribed
+                className={`text-sm transition-all duration-200 flex flex-col items-center gap-0.5 ${emailSubscribed
                     ? "text-primary hover:text-accent"
                     : "text-muted-foreground hover:text-foreground"
                   } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                <Mail className={`w-4 h-4 transition-all duration-200 ${emailSubscribed ? "fill-current" : ""}`} />
-                {emailSubscribed ? "메일 구독 중" : "메일 구독"}
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span>메일</span>
+                </div>
+                {emailSubscribed && (
+                  <span className="text-[10px] text-muted-foreground leading-none">구독중</span>
+                )}
               </button>
             )}
             {status === "authenticated" ? (
