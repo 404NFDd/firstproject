@@ -1,13 +1,28 @@
 import nodemailer from "nodemailer"
 
+// SMTP 설정 검증
+const smtpHost = process.env.SMTP_HOST
+if (!smtpHost) {
+  console.warn("⚠️  SMTP_HOST가 설정되지 않았습니다. 이메일 전송이 실패할 수 있습니다.")
+}
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
+  host: smtpHost || "localhost",
+  port: Number(process.env.SMTP_PORT) || 587,
   secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+  auth: smtpHost
+    ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      }
+    : undefined,
+  // IPv4 강제 (IPv6 연결 문제 해결)
+  family: 4,
+  // 연결 타임아웃 설정
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  // 명시적으로 IPv4 주소 사용
+  lookup: "ipv4",
 })
 
 export interface EmailOptions {
@@ -22,9 +37,16 @@ export interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions) {
+  // SMTP 설정 확인
+  if (!process.env.SMTP_HOST) {
+    const errorMsg = "SMTP_HOST가 설정되지 않았습니다. .env 파일에 SMTP 설정을 추가해주세요."
+    console.error(`[v0] ${errorMsg}`)
+    return { success: false, error: errorMsg }
+  }
+
   try {
     const mailOptions = {
-      from: process.env.SMTP_FROM || "noreply@newshub.com",
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@newshub.com",
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -35,8 +57,18 @@ export async function sendEmail(options: EmailOptions) {
     console.log("[v0] Email sent successfully:", result.messageId)
     return { success: true, messageId: result.messageId }
   } catch (error) {
-    console.error("[v0] Error sending email:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    console.error("[v0] Error sending email:", errorMessage)
+    
+    // 더 명확한 오류 메시지 제공
+    if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("::1")) {
+      return {
+        success: false,
+        error: `SMTP 서버 연결 실패. SMTP_HOST="${process.env.SMTP_HOST}" 설정을 확인해주세요.`,
+      }
+    }
+    
+    return { success: false, error: errorMessage }
   }
 }
 

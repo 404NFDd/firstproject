@@ -5,12 +5,23 @@ import { Header } from "@/components/header"
 import { User, Mail, LogOut, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface UserProfile {
   id: string
   email: string
   name: string
   image?: string
+  emailSubscription?: number
 }
 
 export default function ProfilePage() {
@@ -19,6 +30,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({ name: "" })
+  const [emailSubscribed, setEmailSubscribed] = useState(false)
+  const [showUnsubscribeDialog, setShowUnsubscribeDialog] = useState(false)
+  const [togglingEmail, setTogglingEmail] = useState(false)
+  const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,6 +46,13 @@ export default function ProfilePage() {
         const data = await response.json()
         setUser(data.user)
         setFormData({ name: data.user.name })
+        
+        // 메일 구독 상태 조회
+        const subscribeResponse = await fetch("/api/email/subscribe")
+        if (subscribeResponse.ok) {
+          const subscribeData = await subscribeResponse.json()
+          setEmailSubscribed(subscribeData.emailSubscription === true)
+        }
       } catch (error) {
         console.error("Error fetching user:", error)
         router.push("/auth/login")
@@ -75,6 +97,52 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Error updating profile:", error)
+    }
+  }
+
+  const handleToggleEmailSubscription = async (subscribe: boolean) => {
+    if (togglingEmail) return
+    setTogglingEmail(true)
+    try {
+      const response = await fetch("/api/email/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscribe }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setEmailSubscribed(data.emailSubscription === 1)
+        setShowUnsubscribeDialog(false)
+      }
+    } catch (error) {
+      console.error("Error toggling email subscription:", error)
+    } finally {
+      setTogglingEmail(false)
+    }
+  }
+
+  const handleUnsubscribeClick = () => {
+    setShowUnsubscribeDialog(true)
+  }
+
+  const handleSendTestEmail = async () => {
+    if (sendingTestEmail) return
+    setSendingTestEmail(true)
+    try {
+      const response = await fetch("/api/email/test-briefing", {
+        method: "POST",
+      })
+      const data = await response.json()
+      if (data.success) {
+        alert(`✅ 테스트 메일이 ${data.message || "전송되었습니다"}`)
+      } else {
+        alert(`❌ 메일 전송 실패: ${data.error || "알 수 없는 오류"}`)
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error)
+      alert("❌ 테스트 메일 전송 중 오류가 발생했습니다.")
+    } finally {
+      setSendingTestEmail(false)
     }
   }
 
@@ -140,6 +208,63 @@ export default function ProfilePage() {
                   </label>
                   <p className="text-muted-foreground">{user?.email}</p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    메일 구독
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-foreground">
+                        {emailSubscribed ? (
+                          <span className="text-primary font-medium">구독 중 - 매일 아침 8시에 뉴스 브리핑을 받고 있습니다</span>
+                        ) : (
+                          <span className="text-muted-foreground">구독하지 않음</span>
+                        )}
+                      </p>
+                      {emailSubscribed ? (
+                        <button
+                          onClick={handleUnsubscribeClick}
+                          disabled={togglingEmail}
+                          className="px-4 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-input transition disabled:opacity-60"
+                        >
+                          구독 해제
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleEmailSubscription(true)}
+                          disabled={togglingEmail}
+                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition disabled:opacity-60"
+                        >
+                          구독하기
+                        </button>
+                      )}
+                    </div>
+                    <div className="pt-2 border-t border-border">
+                      <button
+                        onClick={handleSendTestEmail}
+                        disabled={sendingTestEmail}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-input transition disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {sendingTestEmail ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            전송 중...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4" />
+                            테스트 메일 보내기
+                          </>
+                        )}
+                      </button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        현재 로그인한 이메일로 테스트 메일을 전송합니다
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -171,6 +296,28 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* 구독 해제 확인 다이얼로그 */}
+      <AlertDialog open={showUnsubscribeDialog} onOpenChange={setShowUnsubscribeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>메일 구독 해제</AlertDialogTitle>
+            <AlertDialogDescription>
+              메일 구독을 해제하시겠습니까? 해제하시면 더 이상 일일 브리핑 메일을 받지 않습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleToggleEmailSubscription(false)}
+              disabled={togglingEmail}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              해제하기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

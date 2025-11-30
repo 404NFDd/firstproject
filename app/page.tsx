@@ -92,6 +92,20 @@ export default function Dashboard() {
 
       const data = await response.json()
 
+      // 10분 이내 요청 제한 (429 Too Many Requests)
+      if (response.status === 429) {
+        // 로딩 상태를 유지하다가 잠시 후 원래대로
+        const waitTime = data.waitTime || 5 // 최소 5초
+        await new Promise((resolve) => setTimeout(resolve, Math.min(waitTime * 1000, 5000)))
+        
+        toast({
+          title: "알림",
+          description: data.message || "최근 10분 이내에 이미 뉴스를 수집했습니다. 잠시 후 다시 시도해주세요.",
+        })
+        setSyncing(false)
+        return
+      }
+
       if (!response.ok) {
         throw new Error(data.error || "뉴스 수집 실패")
       }

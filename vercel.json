@@ -3,6 +3,10 @@
     {
       "path": "/api/news/sync",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/email/daily-briefing",
+      "schedule": "0 8 * * *"
     }
   ]
 }

@@ -1,16 +1,29 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, Search, LogOut, Sun, Moon } from "lucide-react"
+import { Menu, X, Search, LogOut, Sun, Moon, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "@/components/theme-provider"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [emailSubscribed, setEmailSubscribed] = useState(false)
+  const [togglingEmail, setTogglingEmail] = useState(false)
+  const [showSubscribeDialog, setShowSubscribeDialog] = useState(false)
   const { data: session, status } = useSession()
   const { theme, resolvedTheme, toggleTheme } = useTheme()
 
@@ -26,6 +39,54 @@ export function Header() {
       window.cancelAnimationFrame(rafId)
     }
   }, [])
+
+  // 메일 구독 상태 조회
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/email/subscribe")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.emailSubscription !== undefined) {
+            setEmailSubscribed(data.emailSubscription)
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching email subscription:", error)
+        })
+    }
+  }, [status])
+
+  const handleEmailButtonClick = () => {
+    if (emailSubscribed) {
+      // 이미 구독 중이면 프로필 페이지로 이동
+      window.location.href = "/profile"
+    } else {
+      // 구독 안 되어 있으면 팝업 표시
+      // 다이얼로그가 열릴 때도 호버 상태 유지
+      setShowSubscribeDialog(true)
+    }
+  }
+
+  const handleToggleEmailSubscription = async (subscribe: boolean) => {
+    if (togglingEmail || status !== "authenticated") return
+    setTogglingEmail(true)
+    try {
+      const response = await fetch("/api/email/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscribe }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setEmailSubscribed(data.emailSubscription === 1)
+        setShowSubscribeDialog(false)
+      }
+    } catch (error) {
+      console.error("Error toggling email subscription:", error)
+    } finally {
+      setTogglingEmail(false)
+    }
+  }
 
   const activeTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : undefined
   const isDarkMode = activeTheme ? activeTheme !== "light" : undefined
@@ -103,6 +164,41 @@ export function Header() {
             </svg>
             RSS
           </a>
+          {status === "authenticated" && (
+            <>
+              <button
+                onClick={handleEmailButtonClick}
+                disabled={togglingEmail}
+                className={`text-sm transition-all duration-200 flex items-center gap-1 ${emailSubscribed
+                    ? "text-primary hover:text-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}
+                title={emailSubscribed ? "메일 구독 해제" : "메일 구독"}
+              >
+                <Mail className={`w-4 h-4 transition-all duration-200 ${emailSubscribed ? "fill-current" : ""}`} />
+                <span className="hidden lg:inline">메일</span>
+              </button>
+              <AlertDialog open={showSubscribeDialog} onOpenChange={setShowSubscribeDialog}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>메일 구독</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      매일 아침 8시에 주요 뉴스를 요약해서 이메일로 받아보시겠습니까?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleToggleEmailSubscription(true)}
+                      disabled={togglingEmail}
+                    >
+                      구독하기
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </nav>
 
         {/* Search and Theme - Desktop */}
@@ -187,6 +283,19 @@ export function Header() {
               </svg>
               RSS 구독
             </a>
+            {status === "authenticated" && (
+              <button
+                onClick={handleEmailButtonClick}
+                disabled={togglingEmail}
+                className={`text-sm transition-all duration-200 flex items-center gap-2 ${emailSubscribed
+                    ? "text-primary hover:text-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}
+              >
+                <Mail className={`w-4 h-4 transition-all duration-200 ${emailSubscribed ? "fill-current" : ""}`} />
+                {emailSubscribed ? "메일 구독 중" : "메일 구독"}
+              </button>
+            )}
             {status === "authenticated" ? (
               <button
                 onClick={handleLogout}

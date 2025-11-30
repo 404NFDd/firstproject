@@ -140,11 +140,17 @@ export async function translateToKorean(text: string | undefined | null): Promis
   }
 
   try {
+    // 개행 문자 확인 (디버깅용)
+    const hasNewlines = text.includes("\n")
+    if (hasNewlines) {
+      console.log(`📝 번역 전 텍스트에 개행 발견: ${text.split("\n").length - 1}개`)
+    }
+
     // 개행 문자를 임시 마커로 치환하여 보존
     const NEWLINE_MARKER = "___NEWLINE___"
     const DOUBLE_NEWLINE_MARKER = "___DOUBLE_NEWLINE___"
 
-    // 연속된 개행을 먼저 처리
+    // 연속된 개행을 먼저 처리 (2개 이상)
     let textWithMarkers = text.replace(/\n\n+/g, DOUBLE_NEWLINE_MARKER)
     // 단일 개행 처리
     textWithMarkers = textWithMarkers.replace(/\n/g, NEWLINE_MARKER)
@@ -198,8 +204,14 @@ export async function translateToKorean(text: string | undefined | null): Promis
     if (translatedText) {
       // 마커를 다시 개행 문자로 복원
       let restoredText = translatedText
-        .replace(new RegExp(DOUBLE_NEWLINE_MARKER, "g"), "\n\n")
-        .replace(new RegExp(NEWLINE_MARKER, "g"), "\n")
+        .replace(new RegExp(DOUBLE_NEWLINE_MARKER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n\n")
+        .replace(new RegExp(NEWLINE_MARKER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n")
+
+      // 복원 후 개행 확인 (디버깅용)
+      if (hasNewlines) {
+        const restoredNewlines = restoredText.split("\n").length - 1
+        console.log(`✅ 번역 후 개행 복원: ${restoredNewlines}개`)
+      }
 
       return restoredText
     }
@@ -214,12 +226,29 @@ export async function translateToKorean(text: string | undefined | null): Promis
   }
 }
 
-// HTML 태그 제거 및 텍스트만 추출
-const stripHtmlTags = (html?: string | null): string | undefined => {
+// HTML 태그 제거 및 텍스트만 추출 (개행 보존 옵션)
+const stripHtmlTags = (html?: string | null, preserveNewlines = false): string | undefined => {
   if (!html) return undefined
 
+  let text = html
+
+  // HTML 블록 태그를 개행으로 변환 (개행 보존 모드일 때)
+  if (preserveNewlines) {
+    // 블록 태그를 개행으로 변환
+    text = text
+      .replace(/<\/p>/gi, "\n\n")  // </p> -> 두 개행
+      .replace(/<p[^>]*>/gi, "")   // <p> 제거
+      .replace(/<\/div>/gi, "\n")   // </div> -> 개행
+      .replace(/<div[^>]*>/gi, "")  // <div> 제거
+      .replace(/<br\s*\/?>/gi, "\n") // <br> -> 개행
+      .replace(/<\/li>/gi, "\n")    // </li> -> 개행
+      .replace(/<li[^>]*>/gi, "- ")  // <li> -> "- "
+      .replace(/<\/h[1-6]>/gi, "\n\n") // 헤딩 -> 두 개행
+      .replace(/<h[1-6][^>]*>/gi, "")  // 헤딩 시작 태그 제거
+  }
+
   // HTML 태그 제거
-  let text = html.replace(/<[^>]*>/g, "")
+  text = text.replace(/<[^>]*>/g, "")
 
   // HTML 엔티티 디코딩 (순서 중요: &amp;를 먼저 처리해야 함)
   text = text
@@ -232,11 +261,21 @@ const stripHtmlTags = (html?: string | null): string | undefined => {
     .replace(/&#39;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, "/")
+    .replace(/&#10;/g, "\n")  // 개행 엔티티
+    .replace(/&#13;/g, "\r")  // 캐리지 리턴
 
-  // 연속된 공백 정리
-  text = text.replace(/\s+/g, " ").trim()
-
-  return text || undefined
+  if (preserveNewlines) {
+    // 개행 보존 모드: 연속된 공백만 정리 (개행은 유지)
+    // 연속된 공백(개행 제외)을 단일 공백으로
+    text = text.replace(/[ \t]+/g, " ")
+    // 연속된 개행을 최대 2개로 제한
+    text = text.replace(/\n{3,}/g, "\n\n")
+    return text.trim() || undefined
+  } else {
+    // 기존 모드: 모든 공백(개행 포함)을 단일 공백으로
+    text = text.replace(/\s+/g, " ").trim()
+    return text || undefined
+  }
 }
 
 // URL에서 Open Graph 이미지 추출
@@ -381,18 +420,39 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
 
     // 먼저 모든 기사의 원문을 수집
     const rawArticles = articles
-      .map((item) => {
-        const title = stripHtmlTags(item.title) || sanitizeString(item.title)
+      .map((item, index) => {
+        // 원본 데이터 확인 (디버깅용 - 첫 번째 기사만)
+        if (index === 0) {
+          console.log("📰 NewsAPI 원본 데이터 확인:")
+          console.log(`  - title 원본:`, item.title?.substring(0, 100))
+          console.log(`  - description 원본:`, item.description?.substring(0, 100))
+          console.log(`  - content 원본:`, item.content?.substring(0, 200))
+          console.log(`  - content에 개행 있음:`, item.content?.includes("\n") || item.content?.includes("<br") || item.content?.includes("<p>"))
+        }
+
+        // 제목과 설명은 개행 제거 (한 줄로)
+        const title = stripHtmlTags(item.title, false) || sanitizeString(item.title)
         const sourceUrl = sanitizeString(item.url)
 
         if (!title || !sourceUrl) {
           return null
         }
 
+        // content는 개행 보존 (번역 시 개행 유지)
+        const description = stripHtmlTags(item.description, false) || sanitizeString(item.description)
+        const content = stripHtmlTags(item.content, true) || sanitizeString(item.content)
+
+        // 처리 후 데이터 확인 (디버깅용 - 첫 번째 기사만)
+        if (index === 0) {
+          console.log("📝 stripHtmlTags 처리 후:")
+          console.log(`  - content 처리 후:`, content?.substring(0, 200))
+          console.log(`  - content에 개행 있음:`, content?.includes("\n"))
+        }
+
         return {
           title,
-          description: stripHtmlTags(item.description) || sanitizeString(item.description),
-          content: stripHtmlTags(item.content) || sanitizeString(item.content),
+          description,
+          content,
           imageUrl: sanitizeString(item.urlToImage),
           sourceUrl,
           source: sanitizeString(item.source?.name) ?? "NewsAPI",
@@ -575,8 +635,9 @@ async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: num
       const itemsWithImages = await Promise.all(
         items.map(async (item: any) => {
           // HTML 태그 제거 및 엔티티 디코딩
-          const cleanTitle = stripHtmlTags(item.title) || sanitizeString(item.title)
-          const cleanDescription = stripHtmlTags(item.description) || sanitizeString(item.description)
+          // 네이버 API는 description만 제공하므로 content로도 사용
+          const cleanTitle = stripHtmlTags(item.title, false) || sanitizeString(item.title)
+          const cleanDescription = stripHtmlTags(item.description, true) || sanitizeString(item.description) // 개행 보존
           const sourceUrl = sanitizeString(item.originallink || item.link)
 
           if (!cleanTitle || !sourceUrl) return null
@@ -608,6 +669,7 @@ async function fetchNewsFromNaver(options: { category: NewsCategory; limit?: num
         (item): item is Omit<NormalizedArticle, "priority"> => item !== null && item.title !== undefined
       )
 
+      // 네이버 API는 한국어 뉴스이므로 번역 불필요
       for (const base of validItems) {
         // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
         const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
@@ -653,10 +715,14 @@ async function fetchFromRssFeeds(limitPerFeed = 10): Promise<NormalizedArticle[]
         const rawDescription = item.description?.value || item.description || item.summary
         const rawContent = item["content:encoded"] || item.content?.value || item.summary
 
+        // content는 개행 보존
+        const description = stripHtmlTags(rawDescription, false) || sanitizeString(rawDescription)
+        const content = stripHtmlTags(rawContent, true) || sanitizeString(rawContent)
+
         const base = {
           title,
-          description: stripHtmlTags(rawDescription) || sanitizeString(rawDescription),
-          content: stripHtmlTags(rawContent) || sanitizeString(rawContent),
+          description,
+          content,
           imageUrl: sanitizeString(item.enclosure?.url || item["media:content"]?.url),
           sourceUrl,
           source: sanitizeString(item.source?.value) ?? new URL(sourceUrl).hostname,
@@ -665,12 +731,24 @@ async function fetchFromRssFeeds(limitPerFeed = 10): Promise<NormalizedArticle[]
           category: feed.category,
         }
 
-        // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
-        const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
-        aggregated.push({
+        // RSS 피드 기사 번역
+        const translatedTitle = await translateToKorean(base.title)
+        const translatedDescription = await translateToKorean(base.description)
+        const translatedContent = await translateToKorean(base.content)
+
+        const translatedBase = {
           ...base,
+          title: translatedTitle || base.title,
+          description: translatedDescription || base.description,
+          content: translatedContent || base.content,
+        }
+
+        // 개발자 관련 키워드가 있으면 developer 카테고리로 재분류
+        const finalCategory = detectDeveloperCategory(translatedBase) ? "developer" : translatedBase.category
+        aggregated.push({
+          ...translatedBase,
           category: finalCategory,
-          priority: calculatePriority({ ...base, category: finalCategory }),
+          priority: calculatePriority({ ...translatedBase, category: finalCategory }),
         })
       }
     } catch (error) {
