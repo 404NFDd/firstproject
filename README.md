@@ -1,302 +1,443 @@
-# 📰 NewsHub - 뉴스 수집 대시보드
-최신 뉴스를 한 곳에서 모아보는 현대적인 뉴스 대시보드 플랫폼입니다.
+# NewsHub - 뉴스 수집 및 요약 대시보드
 
-### 뉴스 수집 방식
-- 기본: NewsAPI 및 각 언론사의 RSS를 통해 기사 메타데이터 수집
-- 수집 주기: 10분 간격 배치(서버 크론 / 외부 스케줄러 사용 예정)
-- 실행 경로: `POST /api/news/sync` (필요 시 `x-cron-secret` 헤더) → `lib/news-service.ts`가 NewsAPI + RSS 기사 정규화/저장
-- 스케줄링: Vercel Cron 또는 자체 서버에서 `*/10 * * * *`로 호출, 로컬 수동 실행 시 `curl -X POST http://localhost:3000/api/news/sync`
+여러 뉴스 소스에서 뉴스를 모아서 보고, AI로 요약해 이메일로 받아보는 플랫폼입니다.
 
-## ✨ 주요 기능
+## 프로젝트 소개
 
-- **반응형 UI/UX** - 모바일, 태블릿, 데스크톱 완벽 지원
-- **사용자 인증** - Next-Auth를 이용한 안전한 로그인/회원가입
-- **토큰 관리** - Access Token (15분) & Refresh Token (7일)
-- **뉴스 검색 및 필터** - 카테고리별 뉴스 필터링
-- **사용자 프로필** - 프로필 편집 및 설정
-- **어두운 테마** - 눈에 편한 다크 모드 기본 적용
+NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스를 수집하고, Google Gemini로 요약하며, 매일 이메일 브리핑을 보내줍니다.
 
-## 🛠️ 기술 스택
+주요 기능:
+- NewsAPI, 네이버 검색 API, RSS 피드에서 자동으로 뉴스 수집
+- Google Translate로 영어 뉴스를 한국어로 번역
+- Google Gemini로 뉴스 요약
+- 매일 오전 7시 구독자에게 이메일 브리핑 발송
+- JWT 토큰 기반 인증
+- 모바일/태블릿/데스크톱 반응형
+- 다크 모드 지원
 
-### Frontend
-- **Next.js 16** - React 기반 프레임워크
-- **React 19** - UI 라이브러리
-- **Tailwind CSS 4** - 유틸리티 기반 스타일링
-- **TypeScript** - 타입 안정성
+## 기능
 
-### Backend & Database
-- **Node.js** - 런타임
-- **Prisma ORM** - 데이터베이스 접근 계층
-- **MariaDB** - 관계형 데이터베이스
-- **JWT** - 토큰 기반 인증
+### 뉴스 수집
+- NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스 가져오기
+- 카테고리별 분류 (일반, 비즈니스, 기술, 개발자, 엔터테인먼트, 건강, 스포츠)
+- 중복 제거 (URL, 제목 기준)
+- 영어 뉴스 자동 번역
+- 우선순위 계산 (신선도, 카테고리, 이미지 유무)
 
-### 추가 라이브러리
-- **jose** - JWT 처리
-- **bcryptjs** - 비밀번호 암호화
-- **lucide-react** - 아이콘
-- **next-themes** - 테마 관리
+### AI 요약
+- Google Gemini 1.5 Flash로 뉴스 요약
+- 요약 결과를 DB에 저장해서 재사용
+- API 오류 시 원문으로 폴백
 
-## 📦 설치 및 설정
+### 이메일
+- 뉴스 선택해서 이메일로 보내기
+- 매일 오전 7시 구독자에게 브리핑 발송
+- HTML 이메일 템플릿
+- SMTP 서버 지원
 
-### 0. Python & Poetry 워크플로우 (선택)
+### 사용자
+- 회원가입/로그인
+- 프로필 관리
+- 이메일 구독 설정
+- 읽은 뉴스 기록
+- RSS 피드 제공
 
-뉴스 크롤링·운영 스크립트를 분리하고 싶다면 Python 3.11+와 Poetry를 함께 설치하세요.
+## 기술 스택
 
-1. Python 3.11 이상 설치 후 pipx 구성
-   ```bash
-   python -m pip install --user pipx
-   pipx ensurepath
-   ```
-2. Poetry 설치 및 버전 확인
-   ```bash
-   pipx install poetry
-   poetry --version
-   ```
-3. 루트 디렉터리에서 가상환경을 프로젝트 내부에 생성하도록 설정
-   ```bash
-   poetry config virtualenvs.in-project true --local
-   ```
-4. `pyproject.toml` 기반 의존성 설치
-   ```bash
-   poetry install
-   ```
-5. 환경 유틸리티 실행
-   ```bash
-   poetry run python scripts/setup.py --summary
-   poetry run python scripts/setup.py --bootstrap-env --check-env
-   ```
+**Frontend**
+- Next.js 16 (App Router), React 19, TypeScript
+- Tailwind CSS 4, Radix UI
+- React Hook Form, Zod
 
-> `scripts/setup.py`는 `.env.local` 템플릿 복사와 필수 환경 변수 검증을 자동화합니다. Node.js 기반 개발과 병행해도 충돌이 없으며, `poetry run <command>`로 별도 백오피스 스크립트를 안전하게 실행할 수 있습니다.
+**Backend**
+- Next.js API Routes
+- Prisma ORM, MariaDB/MySQL
+- JWT (jose), bcryptjs
 
-### 1. 환경 변수 설정
+**외부 API**
+- NewsAPI - 뉴스 수집
+- 네이버 검색 API - 한국 뉴스
+- Google Translate API - 번역
+- Google Gemini API - 뉴스 요약
+- SMTP - 이메일 전송
 
-`.env.local.example`을 참고하여 `.env.local` 파일을 생성합니다:
+## 설치 및 실행
 
-\`\`\`bash
-cp .env.local.example .env.local
-\`\`\`
+필수 요구사항: Node.js 20.9+, MariaDB/MySQL 8.0+
 
-필수 환경 변수를 입력합니다:
+### 1. 프로젝트 클론 및 의존성 설치
 
-\`\`\`env
+```bash
+git clone <repository-url>
+cd firstproject
+npm install
+```
+
+### 2. 환경 변수 설정
+
+`.env.local` 파일을 만들고 필요한 환경 변수를 설정합니다:
+
+```env
+# 데이터베이스
 DATABASE_URL="mysql://user:password@localhost:3306/news_db"
-NEXTAUTH_SECRET="your-secret-key"
+
+# NextAuth 설정
+NEXTAUTH_SECRET="your-random-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
-JWT_ACCESS_SECRET="your-access-secret"
-JWT_REFRESH_SECRET="your-refresh-secret"
+
+# JWT 토큰
+JWT_ACCESS_SECRET="your-access-token-secret"
+JWT_REFRESH_SECRET="your-refresh-token-secret"
+
+# NewsAPI (선택사항)
 NEWS_API_KEY="your-newsapi-key"
-CRON_SECRET="optional-secret-for-cron"
-\`\`\`
 
-### 2. 데이터베이스 설정
+# 네이버 검색 API (선택사항)
+CLIENT_ID="your-naver-client-id"
+CLIENT_SECRET="your-naver-client-secret"
 
-MariaDB를 설치하고 데이터베이스를 생성합니다:
+# Google Translate API (선택사항)
+GOOGLE_TRANSLATE_API_KEY="your-google-translate-api-key"
 
-\`\`\`bash
-# MariaDB 접속
+# Google Gemini API (선택사항, AI 요약용)
+GEMINI_API_KEY="your-gemini-api-key"
+
+# SMTP 설정 (이메일 발송용)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+SMTP_FROM="NewsHub <noreply@newshub.com>"
+
+# 크론 작업 보안 (선택사항)
+CRON_SECRET="your-cron-secret-key"
+
+# 공개 URL (이메일 링크용)
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+```
+
+### 3. 데이터베이스 설정
+
+```bash
+# MariaDB/MySQL 접속
 mysql -u root -p
 
 # 데이터베이스 생성
 CREATE DATABASE news_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-\`\`\`
 
-### 3. 의존성 설치
-
-\`\`\`bash
-npm install
-\`\`\`
+```
 
 ### 4. Prisma 마이그레이션
 
-\`\`\`bash
-# 마이그레이션 실행
+```bash
+# Prisma 클라이언트 생성
+npx prisma generate
+
+# 데이터베이스 마이그레이션 실행
 npx prisma migrate dev
 
-# (선택) Prisma Studio로 데이터베이스 확인
-npx prisma studio
-\`\`\`
+```
 
 ### 5. 개발 서버 시작
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
-브라우저에서 `http://localhost:3000`으로 접속합니다.
+`http://localhost:3000`에서 확인할 수 있습니다.
 
-## 🚀 사용하기
+### 6. Python 환경 설정 (선택)
 
-### 회원가입 및 로그인
-1. `/auth/register`에서 새 계정 생성
-2. 이메일과 비밀번호로 로그인
+Python 스크립트가 필요하면:
 
-### 뉴스 대시보드
-- 최신 뉴스 확인
-- 카테고리별로 필터링
-- 뉴스 상세 보기
+```bash
+# Python 3.11 이상 설치 후 pipx 구성
+python -m pip install --user pipx
+pipx ensurepath
 
-### 프로필 관리
-- `/profile`에서 프로필 편집
-- 사용자 정보 수정
-- 로그아웃
+# Poetry 설치
+pipx install poetry
 
-## 📁 프로젝트 구조
+# 가상환경을 프로젝트 내부에 생성
+poetry config virtualenvs.in-project true --local
 
-\`\`\`
-.
-├── app/
-│   ├── api/                 # API 라우트
-│   │   ├── auth/           # 인증 API
-│   │   └── news/           # 뉴스 API
-│   ├── auth/               # 인증 페이지
-│   ├── news/               # 뉴스 상세 페이지
-│   ├── profile/            # 프로필 페이지
-│   ├── layout.tsx          # 레이아웃
-│   ├── page.tsx            # 메인 대시보드
-│   └── globals.css         # 글로벌 스타일
-├── components/
-│   ├── header.tsx          # 헤더
-│   ├── news-card.tsx       # 뉴스 카드
-│   └── auth-form.tsx       # 인증 폼
-├── lib/
-│   ├── auth.ts             # 토큰 유틸리티
-│   ├── prisma.ts           # Prisma 클라이언트
-│   └── news-service.ts     # 뉴스 서비스
-├── prisma/
-│   └── schema.prisma       # 데이터베이스 스키마
-└── scripts/
-    └── setup.ts            # 초기 설정 스크립트
-\`\`\`
+# 의존성 설치
+poetry install
 
-### Prisma 엔티티 개요
+# 환경 설정 스크립트 실행
+poetry run python scripts/setup.py --bootstrap-env --check-env
+```
 
-| 모델 | 핵심 필드 | 설명 |
-| --- | --- | --- |
-| `User` | `email`, `password`, `image`, `createdAt` | 회원 기본 정보와 프로필 이미지를 저장하며 RefreshToken·읽음 이력과 관계를 맺습니다. |
-| `RefreshToken` | `token`, `expiresAt`, `userId` | Refresh Token을 영속화해 강제 로그아웃·감사 추적을 지원합니다. |
-| `News` | `title`, `content`, `imageUrl`, `sourceUrl`, `category`, `publishedAt`, `priority` | 외부 데이터 소스에서 적재한 기사로 읽음 이력과 연결되며 추천·AI 요약의 기본 재료입니다. |
-| `NewsReadHistory` | `userId`, `newsId`, `readCount`, `updatedAt` | 사용자의 열람 기록을 집계해 개인화 추천과 아침 브리핑 우선순위를 계산합니다. |
+## 사용 방법
 
-## 🔐 보안 기능
+1. `/auth/register`에서 회원가입
+2. `/auth/login`에서 로그인
+3. 메인 페이지에서 "뉴스 수집" 버튼으로 뉴스 가져오기
+4. 카테고리 필터로 원하는 뉴스만 보기
+5. 스크롤하면 자동으로 더 많은 뉴스 로드
+6. `/profile`에서 이메일 구독 설정
+7. `/api/rss`를 RSS 리더에 추가
 
-- **비밀번호 암호화** - bcryptjs로 안전하게 해시화
-- **JWT 토큰** - Access & Refresh 토큰 분리
-- **HttpOnly 쿠키** - XSS 공격 방지
-- **CSRF 보호** - SameSite 정책 적용
-- **SQL 인젝션 방지** - Prisma ORM 사용
+## 프로젝트 구조
 
-## 🎨 반응형 디자인
+```
+firstproject/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API 라우트
+│   │   ├── auth/                 # 인증 API
+│   │   │   ├── [...nextauth]/    # NextAuth 핸들러
+│   │   │   ├── login/            # 로그인 엔드포인트
+│   │   │   ├── logout/           # 로그아웃 엔드포인트
+│   │   │   ├── register/         # 회원가입 엔드포인트
+│   │   │   ├── refresh/          # 토큰 갱신
+│   │   │   ├── me/               # 현재 사용자 정보
+│   │   │   └── profile/          # 프로필 업데이트
+│   │   ├── news/                 # 뉴스 API
+│   │   │   ├── route.ts          # 뉴스 목록 조회
+│   │   │   ├── [id]/             # 뉴스 상세
+│   │   │   ├── sync/             # 뉴스 수집 트리거
+│   │   │   ├── bookmark/         # 북마크 관리
+│   │   │   ├── bookmarks/        # 북마크 목록
+│   │   │   └── send-email/       # 뉴스 이메일 발송
+│   │   ├── email/                # 이메일 API
+│   │   │   ├── subscribe/        # 구독 관리
+│   │   │   ├── daily-briefing/   # 일일 브리핑 전송
+│   │   │   └── test-briefing/    # 브리핑 테스트
+│   │   └── rss/                  # RSS 피드 생성
+│   ├── auth/                     # 인증 페이지
+│   │   ├── login/                # 로그인 페이지
+│   │   └── register/             # 회원가입 페이지
+│   ├── news/                     # 뉴스 페이지
+│   │   └── [id]/                 # 뉴스 상세 페이지
+│   ├── profile/                  # 프로필 페이지
+│   ├── bookmarks/                # 북마크 페이지
+│   ├── layout.tsx                # 루트 레이아웃
+│   ├── page.tsx                  # 메인 대시보드
+│   └── globals.css               # 글로벌 스타일
+├── components/                   # React 컴포넌트
+│   ├── ui/                       # 재사용 가능한 UI 컴포넌트
+│   ├── header.tsx                # 헤더 컴포넌트
+│   ├── news-card.tsx             # 뉴스 카드 컴포넌트
+│   ├── auth-form.tsx             # 인증 폼 컴포넌트
+│   ├── app-providers.tsx         # 앱 프로바이더
+│   └── theme-provider.tsx        # 테마 프로바이더
+├── lib/                          # 유틸리티 및 서비스
+│   ├── prisma.ts                 # Prisma 클라이언트
+│   ├── auth.ts                   # 인증 유틸리티
+│   ├── auth-options.ts           # NextAuth 설정
+│   ├── news-service.ts           # 뉴스 수집 및 조회 서비스
+│   ├── rss-service.tsx           # RSS 피드 생성 서비스
+│   ├── email-service.tsx         # 이메일 전송 서비스
+│   ├── ai-summary.ts             # AI 요약 서비스 (Gemini)
+│   ├── daily-briefing.ts         # 일일 브리핑 서비스
+│   ├── utils.ts                  # 공통 유틸리티
+│   └── theme-context.tsx         # 테마 컨텍스트
+├── hooks/                        # React 훅
+│   ├── use-toast.ts              # 토스트 알림 훅
+│   └── use-mobile.ts             # 모바일 감지 훅
+├── prisma/                       # Prisma 설정
+│   ├── schema.prisma             # 데이터베이스 스키마
+│   └── migrations/               # 마이그레이션 파일
+├── scripts/                      # 유틸리티 스크립트
+│   ├── setup.ts                  # 초기 설정 (TypeScript)
+│   ├── setup.py                  # 초기 설정 (Python)
+│   └── translate-existing-news.ts # 기존 뉴스 번역
+├── public/                       # 정적 파일
+│   └── *.jpg, *.png, *.svg      # 이미지 및 아이콘
+├── data/                         # 데이터 파일
+│   └── mock-news.ts              # 목업 데이터
+├── styles/                       # 스타일 파일
+│   └── globals.css               # 글로벌 스타일
+├── package.json                  # 프로젝트 의존성
+├── tsconfig.json                 # TypeScript 설정
+├── next.config.mjs               # Next.js 설정
+├── tailwind.config.js            # Tailwind CSS 설정
+├── components.json               # shadcn/ui 설정
+├── pyproject.toml                # Python 프로젝트 설정
+└── README.md                     # 프로젝트 문서
+```
 
-- **모바일 (320px ~ 640px)** - 단일 컬럼, 최적화된 터치
-- **태블릿 (641px ~ 1024px)** - 2컬럼 그리드
-- **데스크톱 (1025px+)** - 3컬럼 그리드
+## 데이터베이스 스키마
 
-## 📚 API 문서
+주요 모델:
+
+**User** - 사용자 정보
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID (CUID) |
+| email | String | 이메일 (고유) |
+| name | String? | 사용자 이름 |
+| password | String | 해시된 비밀번호 |
+| image | String? | 프로필 이미지 URL |
+| emailSubscription | Int | 이메일 구독 상태 (0: 미구독, 1: 구독) |
+| createdAt | DateTime | 생성일시 |
+| updatedAt | DateTime | 수정일시 |
+
+**News** - 뉴스 기사
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID |
+| title | String | 제목 |
+| description | String? | 요약 설명 |
+| content | String? | 본문 내용 |
+| imageUrl | String? | 이미지 URL |
+| sourceUrl | String? | 원문 URL |
+| source | String | 출처 |
+| author | String? | 작성자 |
+| publishedAt | DateTime | 발행일시 |
+| category | String | 카테고리 |
+| priority | Int | 우선순위 점수 |
+| isTranslated | Int | 번역 상태 (0: 미번역, 1: 번역 완료) |
+| createdAt | DateTime | 생성일시 |
+| updatedAt | DateTime | 수정일시 |
+
+**NewsSummary** - AI 요약 저장
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID |
+| newsId | String | 뉴스 ID (고유) |
+| summary | String | AI 요약 내용 |
+| createdAt | DateTime | 생성일시 |
+| updatedAt | DateTime | 수정일시 |
+
+**NewsReadHistory** - 읽음 이력
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID |
+| userId | String | 사용자 ID |
+| newsId | String | 뉴스 ID |
+| readCount | Int | 읽은 횟수 |
+| createdAt | DateTime | 생성일시 |
+| updatedAt | DateTime | 수정일시 |
+
+**RefreshToken** - JWT 토큰 저장
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID |
+| token | String | 토큰 값 (고유) |
+| userId | String | 사용자 ID |
+| expiresAt | DateTime | 만료일시 |
+| createdAt | DateTime | 생성일시 |
+
+**NewsSyncLog** - 수집 로그
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | String | 고유 ID |
+| status | String | 상태 (success, failed, processing) |
+| fetched | Int | 가져온 기사 수 |
+| persisted | Int | 저장된 기사 수 |
+| skipped | Int | 건너뛴 기사 수 |
+| error | String? | 오류 메시지 |
+| createdAt | DateTime | 생성일시 |
+
+## API 엔드포인트
 
 ### 인증
-- `POST /api/auth/register` - 회원가입
-- `POST /api/auth/login` - 로그인
-- `POST /api/auth/logout` - 로그아웃
-- `POST /api/auth/refresh` - 토큰 갱신
-- `GET /api/auth/me` - 현재 사용자 정보
+
+**POST /api/auth/register** - 회원가입
+
+**POST /api/auth/login** - 로그인  
+**POST /api/auth/logout** - 로그아웃  
+**POST /api/auth/refresh** - 토큰 갱신  
+**GET /api/auth/me** - 현재 사용자 정보  
+**PUT /api/auth/profile** - 프로필 업데이트
 
 ### 뉴스
-- `GET /api/news` - 뉴스 목록 (페이지네이션, 필터링)
-- `GET /api/news/[id]` - 뉴스 상세
-- `POST /api/news/sync` - 배치 수집 트리거 (Vercel Cron, `x-cron-secret` 헤더 지원)
 
-## ⏱️ 데이터 파이프라인 & 스케줄링
+**GET /api/news** - 뉴스 목록 (쿼리: page, limit, category, search, sort)  
+**GET /api/news/[id]** - 뉴스 상세  
+**POST /api/news/sync** - 뉴스 수집 (10분당 1회 제한)  
+**POST /api/news/send-email** - 뉴스 이메일 발송  
+**GET /api/rss** - RSS 피드
 
-1. `lib/news-service.ts`  
-   - NewsAPI + 주요 RSS 피드를 병합해 카테고리별 기사 노말라이즈  
-   - 10분 단위 배치에서 `priority` 점수를 재계산해 개인화 추천의 기초 데이터를 준비
-2. `POST /api/news/sync`  
-   - 로컬: `curl -X POST http://localhost:3000/api/news/sync`  
-   - 프로덕션: Vercel Cron (예: `*/10 * * * * https://your-app.vercel.app/api/news/sync`), 필요 시 `x-cron-secret: $CRON_SECRET`
-3. 실패 재시도  
-   - 라우트 응답에 `persisted`/`skipped`를 포함하므로, 모니터링 시스템에서 비정상 증가 시 Slack/Webhook 경보를 걸 수 있습니다.
+### 이메일
 
-`scripts/setup.ts`와 `scripts/setup.py`는 DB/환경 상태를 검증하며, NewsAPI 키가 비어 있으면 RSS만으로 최소한의 데이터셋을 유지합니다.
+**POST /api/email/subscribe** - 구독 관리  
+**POST /api/email/daily-briefing** - 일일 브리핑 전송 (크론)
 
-## 🤖 AI 요약 & 아침 브리핑 메일
+## 뉴스 수집 프로세스
 
-- 매일 오전 7시(사용자별 타임존 기준)에 다음 작업 수행:
-  1. 사용자 관심 카테고리/키워드 기반으로 지난 24시간 주요 기사 조회
-  2. LLM을 이용해 카테고리별로 요약 및 핵심 포인트 생성
-  3. 한 이메일 안에 "오늘의 주요 뉴스 브리핑" 형태로 정리 후 발송
+1. NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스 가져오기
+2. HTML 태그 제거, 이미지 추출, 출처 파싱
+3. 영어 뉴스는 Google Translate로 번역
+4. 개발자 키워드 감지해서 카테고리 재분류
+5. 우선순위 계산 (신선도, 카테고리, 이미지)
+6. 중복 체크 후 DB 저장
 
-- 구현 계획:
-  - `News`, `NewsReadHistory`를 조합해 사용자별 가중치를 계산하고, Prisma에서 지난 24시간 기사를 우선순위 큐로 가져옵니다.
-  - 사용자 프로필에 저장된 타임존을 UTC로 환산해 Vercel Cron(또는 자체 배치 서버)에서 매일 07:00 잡을 등록합니다.
-  - `lib/ai-summary.ts` 모듈(추가 예정)에서 OpenAI/Azure OpenAI/Claude 등 LLM 프로바이더를 래핑해 카테고리별 bullet 요약, 주요 수치, 인용문을 생성합니다.
-  - 요약 결과를 `templates/email/daily-briefing.html` 템플릿에 주입하고 Nodemailer/Resend로 발송, `EmailDigestLog` (예정) 모델에 성공/실패 로그를 남겨 중복 발송을 방지합니다.
-  - 실패 시 재시도 큐(예: Redis Delayed Job)를 두고, 3회 이상 실패하면 Slack/Webhook 알림을 발송해 운영자가 즉시 대응할 수 있게 합니다.
+## 스케줄링
 
-## 🔧 트러블슈팅
+로컬:
+```bash
+curl -X POST http://localhost:3000/api/news/sync
+```
 
-### 데이터베이스 연결 오류
-\`\`\`bash
-# DATABASE_URL 확인
-# MySQL 서버가 실행 중인지 확인
-mysql -u root -p -e "SELECT 1;"
-\`\`\`
+Vercel Cron (`vercel.json`):
+```json
+{
+  "crons": [
+    { "path": "/api/news/sync", "schedule": "*/10 * * * *" },
+    { "path": "/api/email/daily-briefing", "schedule": "0 7 * * *" }
+  ]
+}
+```
 
-### Prisma 마이그레이션 오류
-\`\`\`bash
-# Prisma 초기화
-npx prisma migrate reset
+자체 서버 (crontab):
+```
+*/10 * * * * curl -X POST https://your-app.com/api/news/sync -H "x-cron-secret: YOUR_SECRET"
+0 7 * * * curl -X POST https://your-app.com/api/email/daily-briefing -H "x-cron-secret: YOUR_SECRET"
+```
 
-# 또는 스키마 재생성
-npx prisma db push
-\`\`\`
+## AI 요약 및 일일 브리핑
 
-### 토큰 만료 오류
-- 페이지 새로고침 시 자동으로 Refresh Token이 호출됩니다
-- 7일 이상 로그인하지 않으면 다시 로그인 필요
+Google Gemini 1.5 Flash로 뉴스를 2-3문장으로 요약합니다. 요약 결과는 DB에 저장해서 재사용합니다.
 
-## 📞 지원
+매일 오전 7시 구독자에게 지난 24시간 뉴스 50개를 카테고리별로 요약해서 이메일로 보냅니다.
 
-문제가 발생하면:
-1. 콘솔 에러 메시지 확인
-2. 환경 변수 설정 확인
-3. 데이터베이스 연결 확인
-4. Prisma 마이그레이션 상태 확인
+## 보안
 
-## 🧾 진행 현황 (2025-11-20)
+- 비밀번호 bcryptjs 해싱
+- JWT 토큰 (Access 15분, Refresh 7일)
+- HttpOnly 쿠키
+- Prisma ORM 사용
+- 뉴스 수집 10분당 1회 제한
 
-- React 19 및 Node 20.9 환경에 맞춰 `vaul`, `prisma`, `@prisma/client` 등 의존성 버전을 정리했습니다.
-- Next.js 16 기반 ESLint 구성을 추가해 전역 린트 검사를 통과하도록 했습니다.
-- 뉴스 상세 이미지 최적화, 인터섹션 옵저버 정리, 테마/스켈레톤 컴포넌트 안정화 등 렌더링 이슈를 해결했습니다.
-- `npm install`, `npm run lint`, `npm run build`로 배포 전 필수 검증을 수행했습니다.
+## 반응형 디자인
 
-## 🧠 전체 구현 가이드 (AI 복제용)
+모바일: 1컬럼 | 태블릿: 2컬럼 | 데스크톱: 3컬럼
 
-1. **환경 준비**
-   - Node.js 20.9+, PNPM/NPM, Git을 설치합니다.
-   - `cp .env.local.example .env.local` 후 DB·JWT·NextAuth·News API 키·SMTP 정보를 채웁니다.
-   - `npm install`로 모든 의존성을 설치합니다.
+## 트러블슈팅
 
-2. **데이터베이스 & Prisma**
-   - MariaDB/MySQL 8 이상에서 `npx prisma migrate dev`로 스키마를 반영합니다.
-   - 초기 데이터가 필요하면 `scripts/setup.ts`에서 API 크롤링 후 `prisma.news.createMany`로 적재합니다.
+**DB 연결 오류**
+- `DATABASE_URL` 확인
+- MySQL 서버 실행 확인: `mysql -u root -p -e "SELECT 1;"`
 
-3. **실행 & 개발 플로우**
-   - `npm run dev` → App Router 기반 풀스택 서버 실행.
-   - `/app/api`의 라우트에서 인증/뉴스/메일 기능을 제공하므로, 기능 추가 시 해당 디렉터리에 server action 또는 route handler를 생성합니다.
-   - 클라이언트 전역 상태/테마는 `components/theme-provider.tsx`, `lib/theme-context.tsx`, `hooks/use-toast.ts`를 참조합니다.
+**Prisma 마이그레이션 오류**
+- `npx prisma migrate reset` (데이터 삭제됨)
+- 또는 `npx prisma db push`
 
-4. **품질 관리**
-   - `npm run lint`로 React 19/Next 16 규칙을 준수합니다.
-   - `npm run build`로 Turbopack 빌드와 정적 페이지 생성을 검증합니다.
-   - Prisma 변경 시 `npx prisma generate`를 호출하고, E2E 테스트는 Cypress/Playwright 디렉터리에 추가합니다.
+**뉴스 수집 실패**
+- `.env.local`에서 API 키 확인
+- 로그 확인 후 수동 테스트: `curl -X POST http://localhost:3000/api/news/sync`
 
-5. **배포 체크리스트**
-   - Vercel 배포 시 환경 변수와 Cron 스케줄(아침 브리핑)을 함께 등록합니다.
-   - `next.config.mjs`의 `images`·`typescript` 설정을 검토하고, 필요 시 `ignoreBuildErrors`를 false로 돌립니다.
-   - CDN/SMTP/LLM 자격 증명은 Vercel 프로젝트의 Environment Variables에 동일한 키로 추가합니다.
+**이메일 발송 실패**
+- SMTP 설정 확인 (Gmail은 앱 비밀번호 필요)
+- 서버 로그에서 오류 확인
 
-이 가이드를 README와 함께 제공하면 다른 AI 또는 엔지니어도 동일한 환경을 그대로 재현해 기능을 확장할 수 있습니다.
+**번역/요약 API 오류**
+- `GOOGLE_TRANSLATE_API_KEY`, `GEMINI_API_KEY` 확인
+- 할당량 확인 (Google Cloud Console)
 
-## 📄 라이센스
+## 라이센스
 
 MIT License
+
+## 로드맵
+
+- 사용자별 관심 분야 추가
