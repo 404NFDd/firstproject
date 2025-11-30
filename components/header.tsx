@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Menu, X, Search, LogOut, Sun, Moon } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "@/components/theme-provider"
 
@@ -68,7 +69,17 @@ export function Header() {
       <div className="flex h-16 max-w-7xl mx-auto px-4 sm:px-6 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl gradient-text">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg"></div>
+          {mounted && isDarkMode !== undefined ? (
+            <Image
+              src={isDarkMode ? "/icon-dark-32x32.png" : "/icon-light-32x32.png"}
+              alt="NewsHub Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg"></div>
+          )}
           NewsHub
         </Link>
 
