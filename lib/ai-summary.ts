@@ -68,12 +68,18 @@ export async function summarizeArticle(article: NewsArticle): Promise<string> {
       .join("\n\n")
       .substring(0, 8000) // Gemini API 토큰 제한 고려
 
-    const prompt = `다음 뉴스 기사를 2-3문장으로 간결하게 요약해주세요. 핵심 내용만 포함하고, 객관적이고 명확하게 작성해주세요.
+    // 환경 변수에서 커스텀 프롬프트 사용, 없으면 기본 프롬프트 사용
+    const customPromptTemplate = process.env.AI_SUMMARY_PROMPT
+    const defaultPromptTemplate = `다음 뉴스 기사를 2-3문장으로 간결하게 요약해주세요. 핵심 내용만 포함하고, 객관적이고 명확하게 작성해주세요. 띄어쓰기와 개행에 주의해주세요.
 
 기사:
-${textToSummarize}
+{content}
 
 요약:`
+
+    // 프롬프트 템플릿에서 {content}를 실제 내용으로 대체
+    const promptTemplate = customPromptTemplate || defaultPromptTemplate
+    const prompt = promptTemplate.replace(/{content}/g, textToSummarize)
 
     // v1beta API 사용 - 최신 모델
     const response = await fetch(
