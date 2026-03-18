@@ -40,7 +40,6 @@
 - 프로필 관리
 - 이메일 구독 설정
 - 읽은 뉴스 기록
-- RSS 피드 제공
 
 ## 기술 스택
 
@@ -168,7 +167,6 @@ poetry run python scripts/setup.py --bootstrap-env --check-env
 4. 카테고리 필터로 원하는 뉴스만 보기
 5. 스크롤하면 자동으로 더 많은 뉴스 로드
 6. `/profile`에서 이메일 구독 설정
-7. `/api/rss`를 RSS 리더에 추가
 
 ## 프로젝트 구조
 
@@ -195,7 +193,6 @@ firstproject/
 │   │   │   ├── subscribe/        # 구독 관리
 │   │   │   ├── daily-briefing/   # 일일 브리핑 전송
 │   │   │   └── test-briefing/    # 브리핑 테스트
-│   │   └── rss/                  # RSS 피드 생성
 │   ├── auth/                     # 인증 페이지
 │   │   ├── login/                # 로그인 페이지
 │   │   └── register/             # 회원가입 페이지
@@ -218,7 +215,6 @@ firstproject/
 │   ├── auth.ts                   # 인증 유틸리티
 │   ├── auth-options.ts           # NextAuth 설정
 │   ├── news-service.ts           # 뉴스 수집 및 조회 서비스
-│   ├── rss-service.tsx           # RSS 피드 생성 서비스
 │   ├── email-service.tsx         # 이메일 전송 서비스
 │   ├── ai-summary.ts             # AI 요약 서비스 (Gemini)
 │   ├── daily-briefing.ts         # 일일 브리핑 서비스
@@ -346,7 +342,6 @@ firstproject/
 **GET /api/news/[id]** - 뉴스 상세  
 **POST /api/news/sync** - 뉴스 수집 (10분당 1회 제한)  
 **POST /api/news/send-email** - 뉴스 이메일 발송  
-**GET /api/rss** - RSS 피드
 
 ### 이메일
 

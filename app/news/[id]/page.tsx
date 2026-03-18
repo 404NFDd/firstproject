@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { ArrowLeft, Share2, Loader2 } from "lucide-react"
-import Link from "next/link"
 import Image from "next/image"
 
 interface NewsDetail {
@@ -21,6 +20,7 @@ interface NewsDetail {
 
 export default function NewsDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -88,6 +88,22 @@ export default function NewsDetailPage() {
   const decodedDescription = news ? decodeHtmlEntities(news.description) : ""
   const decodedContent = news ? decodeHtmlEntities(news.content) : ""
 
+  const handleBack = () => {
+    // 브라우저 정책상 window.close()가 항상 허용되진 않는다.
+    // 먼저 닫기를 시도하고, 닫히지 않으면 목록으로 fallback 한다.
+    try {
+      window.close()
+    } catch {
+      // ignore
+    }
+
+    setTimeout(() => {
+      if (!window.closed) {
+        router.push("/")
+      }
+    }, 150)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -113,10 +129,14 @@ export default function NewsDetailPage() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Back Button */}
-        <Link href="/" className="inline-flex items-center gap-2 text-primary hover:underline mb-6">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-primary hover:underline mb-6"
+        >
           <ArrowLeft className="w-4 h-4" />
           뉴스 목록으로
-        </Link>
+        </button>
 
         {/* Header */}
         <div className="mb-6">
@@ -183,6 +203,15 @@ export default function NewsDetailPage() {
           </div>
         )}
       </main>
+
+      <button
+        type="button"
+        aria-label="뉴스 목록으로"
+        onClick={handleBack}
+        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition active:scale-95 hover:bg-primary/90"
+      >
+        <ArrowLeft className="h-6 w-6" />
+      </button>
     </div>
   )
 }

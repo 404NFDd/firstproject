@@ -2,39 +2,40 @@ import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 
 export const SUPPORTED_NEWS_CATEGORIES = [
-  "general",
-  "business",
-  "entertainment",
-  "health",
-  "science",
-  "sports",
-  "technology",
-  "developer",
+  // 네이버 뉴스 섹션 번호(표준 카테고리 8개)
+  "100", // 정치
+  "101", // 경제
+  "102", // 사회
+  "103", // 생활·문화
+  "104", // 세계
+  "105", // IT·과학
+  "106", // 연예
+  "107", // 스포츠
 ] as const
 
 type NewsCategory = (typeof SUPPORTED_NEWS_CATEGORIES)[number]
 
 // 네이버 뉴스 섹션 URL 매핑 (HTML 크롤링용)
 const NAVER_SECTION_URLS: Partial<Record<NewsCategory, string>> = {
-  general: "https://news.naver.com",
-  business: "https://news.naver.com/section/101", // 경제
-  entertainment: "https://news.naver.com/section/106", // 연예
-  health: "https://news.naver.com/section/103", // 사회(건강 관련 포함)
-  science: "https://news.naver.com/section/105", // IT/과학
-  sports: "https://sports.news.naver.com/index",
-  technology: "https://news.naver.com/section/105", // IT/과학
-  developer: "https://news.naver.com/section/105", // 개발자 뉴스는 IT/과학에서 추출
+  "100": "https://news.naver.com/section/100",
+  "101": "https://news.naver.com/section/101",
+  "102": "https://news.naver.com/section/102",
+  "103": "https://news.naver.com/section/103",
+  "104": "https://news.naver.com/section/104",
+  "105": "https://news.naver.com/section/105",
+  "106": "https://news.naver.com/section/106",
+  "107": "https://news.naver.com/section/107",
 }
 
 const CATEGORY_PRIORITY_WEIGHT: Record<string, number> = {
-  general: 10,
-  business: 8,
-  entertainment: 4,
-  health: 6,
-  science: 7,
-  sports: 5,
-  technology: 9,
-  developer: 9,
+  "100": 9, // 정치
+  "101": 8, // 경제
+  "102": 8, // 사회
+  "103": 6, // 생활·문화
+  "104": 7, // 세계
+  "105": 8, // IT·과학
+  "106": 5, // 연예
+  "107": 5, // 스포츠
 }
 
 type NormalizedArticle = {
@@ -71,27 +72,8 @@ const DEFAULT_QUERY: Required<Pick<NewsQuery, "limit" | "page" | "sort">> = {
   sort: "latest",
 }
 
-const normalizeCategory = (category?: string | null): NewsCategory => {
-  if (!category) return "general"
-  return (SUPPORTED_NEWS_CATEGORIES.includes(category as NewsCategory) ? category : "general") as NewsCategory
-}
-
 const sanitizeString = (value?: string | null) => value?.trim() || undefined
 
-// 개발자 관련 키워드 감지 함수
-function detectDeveloperCategory(article: { title: string; description?: string; content?: string }): boolean {
-  const keywords = [
-    "개발자", "프로그래밍", "코딩", "소프트웨어 개발", "개발 이슈", "프로그래머", "개발자 뉴스",
-    "developer", "programming", "coding", "software engineer", "software development",
-    "프론트엔드", "백엔드", "풀스택", "frontend", "backend", "fullstack",
-    "알고리즘", "데이터구조", "algorithm", "data structure",
-    "개발 도구", "IDE", "에디터", "개발 환경",
-    "오픈소스", "open source", "github", "git",
-    "스타트업 개발", "스타트업 기술", "startup tech",
-  ]
-  const text = `${article.title} ${article.description || ""} ${article.content || ""}`.toLowerCase()
-  return keywords.some((keyword) => text.includes(keyword.toLowerCase()))
-}
 
 // 간단한 한국어 감지 함수 (한글 유니코드 범위 체크)
 function isKorean(text: string): boolean {
@@ -354,6 +336,168 @@ async function fetchNaverSectionHtml(url: string): Promise<string | null> {
   }
 }
 
+async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    return await response.text()
+  } catch {
+    return null
+  }
+}
+
+function extractMetaContent(html: string, key: string): string | undefined {
+  // property="og:image" content="..."
+  const propRe = new RegExp(`<meta\\s+[^>]*property=["']${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`, "i")
+  const nameRe = new RegExp(`<meta\\s+[^>]*name=["']${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`, "i")
+  const tag = html.match(propRe)?.[0] ?? html.match(nameRe)?.[0]
+  if (!tag) return undefined
+
+  const content = tag.match(/content=["']([^"']+)["']/i)?.[1]
+  return content ? content.trim() : undefined
+}
+
+function extractFirstMatch(html: string, patterns: RegExp[]): string | undefined {
+  for (const pattern of patterns) {
+    const m = html.match(pattern)
+    if (m?.[1]) return m[1]
+  }
+  return undefined
+}
+
+function extractDivById(html: string, id: string): string | undefined {
+  // 정규식만으로 중첩 <div>를 안전하게 처리하기 어려워,
+  // 시작 태그를 찾고 <div>/<\div> 카운팅으로 닫힘을 찾는다.
+  const startRe = new RegExp(`<div\\b[^>]*\\bid=["']${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`, "i")
+  const startMatch = html.match(startRe)
+  if (!startMatch || startMatch.index == null) return undefined
+
+  const startIndex = startMatch.index
+  const afterStart = startIndex + startMatch[0].length
+
+  const tagRe = /<\/div\s*>|<div\b[^>]*>/gi
+  tagRe.lastIndex = afterStart
+
+  let depth = 1
+  let m: RegExpExecArray | null
+  while ((m = tagRe.exec(html)) !== null) {
+    const tag = m[0].toLowerCase()
+    if (tag.startsWith("</div")) {
+      depth -= 1
+      if (depth === 0) {
+        const endIndex = m.index + m[0].length
+        return html.slice(startIndex, endIndex)
+      }
+    } else {
+      depth += 1
+    }
+  }
+
+  return undefined
+}
+
+async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
+  imageUrl?: string
+  description?: string
+  content?: string
+  author?: string
+  publishedAt?: Date
+}> {
+  const html = await fetchHtml(sourceUrl, 9000)
+  if (!html) return {}
+
+  const baseUrl = (() => {
+    try {
+      return new URL(sourceUrl)
+    } catch {
+      return null
+    }
+  })()
+
+  const resolveUrl = (value?: string) => {
+    if (!value) return undefined
+    if (value.startsWith("http://") || value.startsWith("https://")) return value
+    if (!baseUrl) return value
+    try {
+      return new URL(value, baseUrl.origin).href
+    } catch {
+      return value
+    }
+  }
+
+  const imageUrl =
+    resolveUrl(extractMetaContent(html, "og:image")) ??
+    resolveUrl(extractMetaContent(html, "twitter:image"))
+
+  const publishedTimeRaw =
+    extractMetaContent(html, "article:published_time") ??
+    extractMetaContent(html, "og:article:published_time") ??
+    extractMetaContent(html, "og:published_time")
+  const publishedAt = publishedTimeRaw ? new Date(publishedTimeRaw) : undefined
+
+  const author =
+    extractMetaContent(html, "author") ??
+    extractMetaContent(html, "dable:author")
+
+  // 본문: 네이버 뉴스 기사 페이지에서 흔히 쓰는 컨테이너 우선 탐색
+  const bodyContainerHtml =
+    extractDivById(html, "dic_area") ??
+    extractDivById(html, "articeBody") ??
+    extractFirstMatch(html, [
+      // 마지막 fallback은 class 기반이므로, 여기서는 "중첩 div를 어느 정도 포함"하도록 greedy에 가깝게 잡되,
+      // 너무 크게 잡지 않도록 종료 힌트를 둔다.
+      /<div[^>]+class=["'][^"']*newsct_article[^"']*["'][^>]*>([\s\S]*?)<\/article>/i,
+      /<div[^>]+class=["'][^"']*newsct_article[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<!--\s*\/\/\s*newsct_article\s*-->/i,
+      /<div[^>]+class=["'][^"']*newsct_article[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+    ])
+
+  const content = stripHtmlTags(bodyContainerHtml, true)
+
+  const description =
+    stripHtmlTags(extractMetaContent(html, "og:description"), false) ??
+    stripHtmlTags(extractMetaContent(html, "description"), false) ??
+    (content ? content.split("\n").join(" ").slice(0, 180) : undefined)
+
+  return {
+    imageUrl,
+    description,
+    content,
+    author,
+    publishedAt: publishedAt && !Number.isNaN(publishedAt.getTime()) ? publishedAt : undefined,
+  }
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length)
+  let nextIndex = 0
+
+  const workers = Array.from({ length: Math.max(1, concurrency) }, async () => {
+    while (true) {
+      const current = nextIndex
+      nextIndex += 1
+      if (current >= items.length) return
+      results[current] = await mapper(items[current], current)
+    }
+  })
+
+  await Promise.all(workers)
+  return results
+}
+
 function parseKoreanDateTime(text: string): Date | null {
   // Examples:
   // - 2026.03.18. 오전 10:20
@@ -502,31 +646,46 @@ async function fetchNewsFromNaverHtml(options: {
   const limitPerCategory = options.limitPerCategory ?? 20
   const aggregated: NormalizedArticle[] = []
 
+  const fetchAndEnrich = async (sectionUrl: string, baseCategory: NewsCategory) => {
+    const html = await fetchNaverSectionHtml(sectionUrl)
+    if (!html) return
+
+    const baseArticles = parseNaverNewsHtml(html, baseCategory).slice(0, limitPerCategory)
+    const enriched = await mapWithConcurrency(baseArticles, 4, async (base, idx) => {
+      const details = base.sourceUrl ? await fetchNaverArticleDetails(base.sourceUrl) : {}
+      if (idx > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 150))
+      }
+
+      const merged: Omit<NormalizedArticle, "priority"> = {
+        ...base,
+        imageUrl: details.imageUrl ?? base.imageUrl,
+        description: details.description ?? base.description,
+        content: details.content ?? base.content,
+        author: details.author ?? base.author,
+        publishedAt: details.publishedAt ?? base.publishedAt,
+      }
+
+      return {
+        ...merged,
+        category: baseCategory,
+        priority: calculatePriority({ ...merged, category: baseCategory }),
+      }
+    })
+
+    aggregated.push(...enriched)
+  }
+
   for (let i = 0; i < options.categories.length; i++) {
     const category = options.categories[i]
     const sectionUrl = NAVER_SECTION_URLS[category]
-    if (!sectionUrl) {
-      continue
-    }
+    if (!sectionUrl) continue
 
-    // 카테고리 간 간단한 딜레이로 요청 속도 제어
     if (i > 0) {
       await new Promise((resolve) => setTimeout(resolve, 700))
     }
 
-    const html = await fetchNaverSectionHtml(sectionUrl)
-    if (!html) continue
-
-    const baseArticles = parseNaverNewsHtml(html, category).slice(0, limitPerCategory)
-
-    for (const base of baseArticles) {
-      const finalCategory = detectDeveloperCategory(base) ? "developer" : base.category
-      aggregated.push({
-        ...base,
-        category: finalCategory,
-        priority: calculatePriority({ ...base, category: finalCategory }),
-      })
-    }
+    await fetchAndEnrich(sectionUrl, category)
   }
 
   return aggregated
@@ -601,7 +760,7 @@ export async function getNews(query: NewsQuery = {}) {
     const skip = (page - 1) * limit
 
     const where: Prisma.NewsWhereInput = {}
-    if (query.category && query.category !== "all" && query.category !== "general") {
+    if (query.category && query.category !== "all") {
       where.category = query.category
     }
     if (query.search) {
