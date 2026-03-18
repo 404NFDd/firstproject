@@ -371,7 +371,7 @@ export default function Dashboard() {
               <p className="text-muted-foreground mb-6 max-w-md">
                 뉴스를 수집하려면 위의 "뉴스 수집" 버튼을 클릭하세요.
                 <br />
-                NewsAPI와 RSS 피드에서 최신 뉴스를 가져옵니다.
+                네이버 뉴스 HTML 크롤링으로 최신 뉴스를 가져옵니다.
               </p>
               <button
                 onClick={syncNews}

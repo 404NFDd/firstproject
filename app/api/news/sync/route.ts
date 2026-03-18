@@ -62,9 +62,10 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = await request.json().catch(() => ({}))
-    const categories = Array.isArray(payload?.categories)
+    const filteredCategories = Array.isArray(payload?.categories)
       ? payload.categories.filter((category: string) => SUPPORTED_NEWS_CATEGORIES.includes(category as any))
       : undefined
+    const categories = filteredCategories && filteredCategories.length > 0 ? filteredCategories : undefined
 
     // 동기화 시작 로그
     const syncLog = await prisma.newsSyncLog.create({
@@ -80,8 +81,6 @@ export async function POST(request: NextRequest) {
       const result = await ingestLatestNews({
         categories,
         limitPerCategory: payload?.limitPerCategory,
-        includeRss: payload?.includeRss,
-        rssLimit: payload?.rssLimit,
       })
 
       // 성공 로그 업데이트

@@ -4,10 +4,10 @@
 
 ## 프로젝트 소개
 
-NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스를 수집하고, Google Gemini로 요약하며, 매일 이메일 브리핑을 보내줍니다.
+네이버 뉴스 HTML 크롤링으로 뉴스를 수집하고, Google Gemini로 요약하며, 매일 이메일 브리핑을 보내줍니다.
 
 주요 기능:
-- NewsAPI, 네이버 검색 API, RSS 피드에서 자동으로 뉴스 수집
+- 네이버 뉴스 HTML 크롤링으로 자동 뉴스 수집
 - Google Translate로 영어 뉴스를 한국어로 번역
 - Google Gemini로 뉴스 요약
 - 매일 오전 7시 구독자에게 이메일 브리핑 발송
@@ -18,7 +18,7 @@ NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스를 수집하고, Google G
 ## 기능
 
 ### 뉴스 수집
-- NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스 가져오기
+- 네이버 뉴스 HTML 크롤링으로 뉴스 가져오기
 - 카테고리별 분류 (일반, 비즈니스, 기술, 개발자, 엔터테인먼트, 건강, 스포츠)
 - 중복 제거 (URL, 제목 기준)
 - 영어 뉴스 자동 번역
@@ -55,8 +55,6 @@ NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스를 수집하고, Google G
 - JWT (jose), bcryptjs
 
 **외부 API**
-- NewsAPI - 뉴스 수집
-- 네이버 검색 API - 한국 뉴스
 - Google Translate API - 번역
 - Google Gemini API - 뉴스 요약
 - SMTP - 이메일 전송
@@ -88,13 +86,6 @@ NEXTAUTH_URL="http://localhost:3000"
 # JWT 토큰
 JWT_ACCESS_SECRET="your-access-token-secret"
 JWT_REFRESH_SECRET="your-refresh-token-secret"
-
-# NewsAPI (선택사항)
-NEWS_API_KEY="your-newsapi-key"
-
-# 네이버 검색 API (선택사항)
-CLIENT_ID="your-naver-client-id"
-CLIENT_SECRET="your-naver-client-secret"
 
 # Google Translate API (선택사항)
 GOOGLE_TRANSLATE_API_KEY="your-google-translate-api-key"
@@ -364,7 +355,7 @@ firstproject/
 
 ## 뉴스 수집 프로세스
 
-1. NewsAPI, 네이버 검색 API, RSS 피드에서 뉴스 가져오기
+1. 네이버 뉴스 HTML 크롤링으로 뉴스 가져오기
 2. HTML 태그 제거, 이미지 추출, 출처 파싱
 3. 영어 뉴스는 Google Translate로 번역
 4. 개발자 키워드 감지해서 카테고리 재분류
@@ -423,7 +414,6 @@ Google Gemini 1.5 Flash로 뉴스를 2-3문장으로 요약합니다. 요약 결
 - 또는 `npx prisma db push`
 
 **뉴스 수집 실패**
-- `.env.local`에서 API 키 확인
 - 로그 확인 후 수동 테스트: `curl -X POST http://localhost:3000/api/news/sync`
 
 **이메일 발송 실패**
