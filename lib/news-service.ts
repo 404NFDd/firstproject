@@ -75,116 +75,10 @@ const DEFAULT_QUERY: Required<Pick<NewsQuery, "limit" | "page" | "sort">> = {
 const sanitizeString = (value?: string | null) => value?.trim() || undefined
 
 
-// 간단한 한국어 감지 함수 (한글 유니코드 범위 체크)
-function isKorean(text: string): boolean {
-  // 한글 유니코드 범위: AC00-D7AF (완성형), 1100-11FF (자모), 3130-318F (호환 자모)
-  const koreanRegex = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/
-  return koreanRegex.test(text)
-}
-
-// Google Cloud Translation API를 사용하여 텍스트를 한국어로 번역
-export async function translateToKorean(text: string | undefined | null): Promise<string | undefined> {
-  if (!text || !text.trim()) return undefined
-
-  // 이미 한국어인 경우 번역하지 않음
-  if (isKorean(text)) {
-    return text
-  }
-
-  const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY
-  if (!apiKey) {
-    console.warn("⚠️  GOOGLE_TRANSLATE_API_KEY가 설정되지 않아 번역을 건너뜁니다.")
-    return text // 번역 실패 시 원문 반환
-  }
-
-  try {
-    // 개행 문자 확인 (디버깅용)
-    const hasNewlines = text.includes("\n")
-    if (hasNewlines) {
-      console.log(`📝 번역 전 텍스트에 개행 발견: ${text.split("\n").length - 1}개`)
-    }
-
-    // 개행 문자를 임시 마커로 치환하여 보존
-    const NEWLINE_MARKER = "___NEWLINE___"
-    const DOUBLE_NEWLINE_MARKER = "___DOUBLE_NEWLINE___"
-
-    // 연속된 개행을 먼저 처리 (2개 이상)
-    let textWithMarkers = text.replace(/\n\n+/g, DOUBLE_NEWLINE_MARKER)
-    // 단일 개행 처리
-    textWithMarkers = textWithMarkers.replace(/\n/g, NEWLINE_MARKER)
-
-    // Google Cloud Translation API v2 REST API 사용
-    // 문서 참고: https://docs.cloud.google.com/translate/docs/reference/rpc/google.cloud.translate.v2
-    // q는 배열로 전달 (최대 128개), format은 "text" (plain text)
-    const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        q: [textWithMarkers], // TranslateTextRequest.q[] - 배열로 전달 (최대 128개)
-        target: "ko", // TranslateTextRequest.target - 타겟 언어 (필수)
-        format: "text", // TranslateTextRequest.format - "html" 또는 "text" (기본값: "html")
-        // source는 생략하면 자동 감지 (TranslateTextRequest.source - 선택사항)
-      }),
-      signal: AbortSignal.timeout(10000), // 10초 타임아웃
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "")
-      console.error(`⚠️  번역 API 요청 실패: ${response.status} ${response.statusText}`)
-      if (errorText) {
-        try {
-          const errorData = JSON.parse(errorText)
-          console.error(`   오류 내용:`, errorData.error?.message || errorText.substring(0, 200))
-        } catch {
-          console.error(`   응답 내용: ${errorText.substring(0, 200)}`)
-        }
-      }
-      return text // 번역 실패 시 원문 반환
-    }
-
-    const data = await response.json()
-
-    // 에러 응답 체크
-    if (data.error) {
-      console.error(`⚠️  번역 API 오류:`, data.error)
-      return text
-    }
-
-    // TranslateTextResponse 형식: data.translations[].translated_text
-    // REST API는 snake_case를 사용할 수 있으므로 두 가지 형식 모두 확인
-    const translation = data?.data?.translations?.[0]
-    const translatedText = translation?.translated_text || translation?.translatedText
-
-    if (translatedText) {
-      // 마커를 다시 개행 문자로 복원
-      let restoredText = translatedText
-        .replace(new RegExp(DOUBLE_NEWLINE_MARKER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n\n")
-        .replace(new RegExp(NEWLINE_MARKER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n")
-
-      // 복원 후 개행 확인 (디버깅용)
-      if (hasNewlines) {
-        const restoredNewlines = restoredText.split("\n").length - 1
-        console.log(`✅ 번역 후 개행 복원: ${restoredNewlines}개`)
-      }
-
-      return restoredText
-    }
-
-    return text // 번역 결과가 없으면 원문 반환
-  } catch (error) {
-    console.error("⚠️  번역 중 오류 발생:", error)
-    if (error instanceof Error) {
-      console.error(`   오류 메시지: ${error.message}`)
-    }
-    return text // 오류 발생 시 원문 반환
-  }
-}
-
 // HTML 태그 제거 및 텍스트만 추출 (개행 보존 옵션)
+// HTML 정리 유틸
+// Input: HTML 문자열, preserveNewlines(개행 보존 여부)
+// Output: 태그/엔티티가 정리된 평문 문자열
 const stripHtmlTags = (html?: string | null, preserveNewlines = false): string | undefined => {
   if (!html) return undefined
 
@@ -237,6 +131,9 @@ const stripHtmlTags = (html?: string | null, preserveNewlines = false): string |
 }
 
 // URL에서 Open Graph 이미지 추출
+// URL 페이지에서 대표 이미지 메타 태그(og/twitter)를 추출
+// Input: 원문 기사 URL
+// Output: 이미지 URL 또는 undefined
 async function fetchImageFromUrl(url: string): Promise<string | undefined> {
   try {
     const response = await fetch(url, {
@@ -293,6 +190,9 @@ async function fetchImageFromUrl(url: string): Promise<string | undefined> {
   }
 }
 
+// 기사 우선순위 계산
+// Input: 우선순위를 제외한 기사 정보
+// Output: 신선도/카테고리/이미지 보너스를 합산한 점수
 const calculatePriority = (article: Omit<NormalizedArticle, "priority">): number => {
   const now = Date.now()
   const ageInHours = Math.max(0, (now - article.publishedAt.getTime()) / 36e5)
@@ -302,6 +202,9 @@ const calculatePriority = (article: Omit<NormalizedArticle, "priority">): number
   return Math.round(freshnessScore + categoryWeight + hasImageBonus)
 }
 
+// 중복 기사 제거
+// Input: 기사 배열
+// Output: sourceUrl(없으면 title) 기준으로 dedupe된 배열
 const dedupeArticles = (articles: NormalizedArticle[]): NormalizedArticle[] => {
   const seen = new Map<string, NormalizedArticle>()
   for (const article of articles) {
@@ -406,6 +309,9 @@ function extractDivById(html: string, id: string): string | undefined {
   return undefined
 }
 
+// 네이버 기사 상세 크롤링
+// Input: sourceUrl(개별 기사 URL)
+// Output: 이미지/요약/본문/작성자/발행시각 보강 데이터
 async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
   imageUrl?: string
   description?: string
@@ -477,6 +383,9 @@ async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
   }
 }
 
+// 병렬 map 유틸
+// Input: items, 동시성 수, mapper 함수
+// Output: 입력 순서를 유지한 결과 배열
 async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
@@ -498,6 +407,9 @@ async function mapWithConcurrency<T, R>(
   return results
 }
 
+// 한국어 시각 문자열 파서
+// Input: "2026.03.18. 오전 10:20" 형태의 문자열
+// Output: UTC Date 객체(파싱 실패 시 null)
 function parseKoreanDateTime(text: string): Date | null {
   // Examples:
   // - 2026.03.18. 오전 10:20
@@ -531,6 +443,9 @@ function parseKoreanDateTime(text: string): Date | null {
   return Number.isNaN(dObj.getTime()) ? null : dObj
 }
 
+// 네이버 리스트/본문 문맥에서 발행시각 추출
+// Input: 앵커 주변 HTML 조각
+// Output: 파싱된 Date 또는 null
 function parseNaverPublishedAt(contextHtml: string): Date | null {
   // 1) data-date-time="2026-03-18 10:20:00" (common on list items)
   const dataDateTime = contextHtml.match(/data-date-time=["'](\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)["']/i)
@@ -571,6 +486,9 @@ function parseNaverPublishedAt(contextHtml: string): Date | null {
 }
 
 // 네이버 뉴스 HTML에서 기사 정보 추출
+// 섹션 HTML에서 기사 목록 파싱
+// Input: 네이버 섹션 HTML, 카테고리 코드
+// Output: 우선순위 계산 전 기사 배열
 function parseNaverNewsHtml(html: string, category: NewsCategory): Omit<NormalizedArticle, "priority">[] {
   const articles: Omit<NormalizedArticle, "priority">[] = []
 
@@ -639,6 +557,9 @@ function parseNaverNewsHtml(html: string, category: NewsCategory): Omit<Normaliz
 }
 
 // 네이버 HTML 크롤러: 섹션별로 HTML을 가져와 NormalizedArticle로 변환
+// 섹션별 수집 + 상세 보강 파이프라인
+// Input: categories, limitPerCategory
+// Output: 우선순위가 계산된 기사 배열
 async function fetchNewsFromNaverHtml(options: {
   categories: NewsCategory[]
   limitPerCategory?: number
@@ -691,6 +612,9 @@ async function fetchNewsFromNaverHtml(options: {
   return aggregated
 }
 
+// DB 저장 단계
+// Input: 정규화된 기사 배열
+// Output: fetched/persisted/skipped 집계 결과
 async function persistArticles(articles: NormalizedArticle[]): Promise<NewsIngestResult> {
   let persisted = 0
   let skipped = 0
@@ -724,8 +648,6 @@ async function persistArticles(articles: NormalizedArticle[]): Promise<NewsInges
         publishedAt: article.publishedAt,
         category: article.category,
         priority: article.priority,
-        // 네이버 HTML 크롤링 기반 수집이므로 기본적으로 한국어 기사로 간주
-        isTranslated: 1,
       },
     })
     persisted += 1
@@ -739,6 +661,9 @@ async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: numbe
   return []
 }
 
+// 최신 뉴스 수집 진입점
+// Input: 수집 카테고리/카테고리당 최대 수량
+// Output: 저장 결과 집계
 export async function ingestLatestNews(options?: {
   categories?: NewsCategory[]
   limitPerCategory?: number
@@ -754,6 +679,9 @@ export async function ingestLatestNews(options?: {
   return persistArticles(deduped)
 }
 
+// 목록 조회 API용 서비스
+// Input: 페이징/검색/정렬/카테고리 필터 쿼리
+// Output: 뉴스 배열 + pagination 메타데이터
 export async function getNews(query: NewsQuery = {}) {
   try {
     const { page, limit, sort } = { ...DEFAULT_QUERY, ...query }
@@ -825,6 +753,9 @@ export async function getNews(query: NewsQuery = {}) {
   }
 }
 
+// 단건 상세 조회
+// Input: newsId
+// Output: 해당 뉴스(없거나 오류 시 null)
 export async function getNewsDetail(newsId: string) {
   try {
     return await prisma.news.findUnique({
@@ -839,6 +770,9 @@ export async function getNewsDetail(newsId: string) {
   }
 }
 
+// 검색 래퍼
+// Input: query, page, limit
+// Output: getNews와 동일한 목록/페이지네이션 구조
 export async function searchNews(query: string, page = 1, limit = 10) {
   return getNews({ search: query, page, limit })
 }

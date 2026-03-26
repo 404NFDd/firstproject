@@ -35,6 +35,9 @@ export default function Dashboard() {
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingMore = useRef(false)
 
+  // 카테고리 변경 핸들러
+  // Input: 선택된 카테고리 문자열
+  // Output: 목록/페이지네이션/자동동기화 관련 상태를 초기화
   const handleCategoryChange = (newCategory: string) => {
     setCategory(newCategory)
     setNews([])
@@ -44,6 +47,9 @@ export default function Dashboard() {
     setHasCheckedSync(false)
   }
 
+  // 뉴스 목록 조회 함수
+  // Input: pageNum(조회 페이지), append(기존 목록 뒤에 추가 여부), categoryOverride(선택적 카테고리)
+  // Output: news/pagination 관련 상태 업데이트, 실패 시 토스트 노출
   const fetchNews = useCallback(
     async (pageNum: number, append = false, categoryOverride?: string) => {
       if (isLoadingMore.current) return
@@ -93,6 +99,9 @@ export default function Dashboard() {
     [category, toast, hasCheckedSync],
   )
 
+  // 서버 수집 API를 호출해 최신 뉴스를 DB에 적재
+  // Input: 없음
+  // Output: 수집 결과 토스트 노출 후 첫 페이지 재조회
   const syncNews = useCallback(async () => {
     if (syncing) return
 
@@ -191,6 +200,9 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, hasMore, loading, news.length, category])
 
+  // 단일 기사 이메일 발송
+  // Input: newsId(발송할 기사 ID)
+  // Output: 성공/실패 토스트 노출
   const handleSendEmail = async (newsId: string) => {
     try {
       const response = await fetch("/api/news/send-email", {
@@ -221,6 +233,9 @@ export default function Dashboard() {
     }
   }
 
+  // 선택된 여러 기사 이메일 발송
+  // Input: selectedNews(Set<string>)
+  // Output: 발송 성공 시 선택 상태 초기화
   const handleSendSelectedEmail = async () => {
     if (selectedNews.size === 0) {
       toast({

@@ -21,6 +21,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     name: "",
   })
 
+  // 인증 폼 제출 처리
+  // Input: 폼 이벤트 + formData(email/password/name)
+  // Output: 로그인/회원가입 성공 시 홈으로 이동, 실패 시 error 상태 설정
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -68,6 +71,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   }
 
+  // 공통 입력 변경 처리
+  // Input: input의 name/value
+  // Output: formData의 해당 필드 업데이트
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))

@@ -8,6 +8,8 @@ import { summarizeNewsByCategory, formatSummarizedNewsHTML } from "@/lib/ai-summ
 
 /**
  * 지난 24시간 동안의 주요 뉴스를 조회합니다
+ * Input: 없음
+ * Output: 우선순위/발행시각 기준으로 정렬된 뉴스 배열(최대 50개)
  */
 export async function getDailyNews() {
   const yesterday = new Date()
@@ -36,6 +38,8 @@ export async function getDailyNews() {
 
 /**
  * 메일 구독 사용자들에게 일일 브리핑을 전송합니다
+ * Input: 없음
+ * Output: 전송 성공/실패 집계 객체
  */
 export async function sendDailyBriefing() {
   try {
@@ -130,6 +134,8 @@ export async function sendDailyBriefing() {
 
 /**
  * 일일 브리핑 이메일 HTML 생성
+ * Input: 요약 HTML, 사용자명, 총 기사 수
+ * Output: 최종 이메일 본문 HTML 문자열
  */
 function generateBriefingEmailHTML(newsHTML: string, userName: string, totalArticles: number) {
   const date = new Date().toLocaleDateString("ko-KR", {

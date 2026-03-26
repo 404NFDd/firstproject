@@ -3,6 +3,9 @@ import { getNews } from "@/lib/news-service"
 
 export async function GET(request: NextRequest) {
   try {
+    // Input: query string(page/limit/q/category/sort/minPriority)
+    // Output: 뉴스 목록 + pagination JSON
+    // Note: 파라미터 미입력 시 page=1, limit=12, sort=latest 기본값을 사용
     const searchParams = request.nextUrl.searchParams
     const page = Number.parseInt(searchParams.get("page") || "1", 10)
     const limit = Number.parseInt(searchParams.get("limit") || "12", 10)

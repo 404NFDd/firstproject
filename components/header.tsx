@@ -56,6 +56,9 @@ export function Header() {
     }
   }, [status])
 
+  // 메일 버튼 클릭 처리
+  // Input: 현재 emailSubscribed 상태
+  // Output: 구독 중이면 /profile 이동, 아니면 구독 다이얼로그 오픈
   const handleEmailButtonClick = () => {
     if (emailSubscribed) {
       // 이미 구독 중이면 프로필 페이지로 이동
@@ -67,6 +70,9 @@ export function Header() {
     }
   }
 
+  // 이메일 브리핑 구독 토글
+  // Input: subscribe(true=구독, false=해제)
+  // Output: 서버 반영 후 emailSubscribed 갱신
   const handleToggleEmailSubscription = async (subscribe: boolean) => {
     if (togglingEmail || status !== "authenticated") return
     setTogglingEmail(true)
@@ -101,6 +107,9 @@ export function Header() {
     <span className="block w-5 h-5" aria-hidden="true" />
   )
 
+  // 로그아웃 후 로그인 페이지 이동 유틸
+  // Input: 없음
+  // Output: signOut callbackUrl로 이동
   const redirectToLogin = async () => {
     try {
       await signOut({ callbackUrl: "/auth/login" })
@@ -109,6 +118,9 @@ export function Header() {
     }
   }
 
+  // 로그아웃 처리
+  // Input: 없음
+  // Output: 서버 로그아웃 API 호출 후 로그인 페이지 이동
   const handleLogout = async () => {
     if (loggingOut) return
     setLoggingOut(true)
