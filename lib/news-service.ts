@@ -130,66 +130,6 @@ const stripHtmlTags = (html?: string | null, preserveNewlines = false): string |
   }
 }
 
-// URL에서 Open Graph 이미지 추출
-// URL 페이지에서 대표 이미지 메타 태그(og/twitter)를 추출
-// Input: 원문 기사 URL
-// Output: 이미지 URL 또는 undefined
-async function fetchImageFromUrl(url: string): Promise<string | undefined> {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-      next: { revalidate: 3600 }, // 1시간 캐시
-      signal: AbortSignal.timeout(5000), // 5초 타임아웃
-    })
-
-    if (!response.ok) {
-      return undefined
-    }
-
-    const html = await response.text()
-    const baseUrl = new URL(url) // 원본 URL의 base URL
-
-    // 상대 경로를 절대 URL로 변환하는 헬퍼 함수
-    const resolveUrl = (imageUrl: string): string => {
-      // 이미 절대 URL이면 그대로 반환
-      if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-        return imageUrl
-      }
-      // 상대 경로면 base URL과 결합
-      try {
-        return new URL(imageUrl, baseUrl.origin).href
-      } catch {
-        return imageUrl
-      }
-    }
-
-    // Open Graph 이미지 추출
-    const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
-    if (ogImageMatch && ogImageMatch[1]) {
-      return resolveUrl(ogImageMatch[1].trim())
-    }
-
-    // Twitter Card 이미지 추출 (대체)
-    const twitterImageMatch = html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i)
-    if (twitterImageMatch && twitterImageMatch[1]) {
-      return resolveUrl(twitterImageMatch[1].trim())
-    }
-
-    // 일반 이미지 메타 태그 추출
-    const imageMatch = html.match(/<meta\s+name=["']image["']\s+content=["']([^"']+)["']/i)
-    if (imageMatch && imageMatch[1]) {
-      return resolveUrl(imageMatch[1].trim())
-    }
-
-    return undefined
-  } catch (error) {
-    // 타임아웃이나 네트워크 오류는 조용히 무시
-    return undefined
-  }
-}
-
 // 기사 우선순위 계산
 // Input: 우선순위를 제외한 기사 정보
 // Output: 신선도/카테고리/이미지 보너스를 합산한 점수
@@ -218,25 +158,12 @@ const dedupeArticles = (articles: NormalizedArticle[]): NormalizedArticle[] => {
 
 // 네이버 뉴스 HTML을 직접 크롤링하는 헬퍼 함수
 async function fetchNaverSectionHtml(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(8000),
-    })
-
-    if (!response.ok) {
-      console.warn(`⚠️  네이버 뉴스 HTML 요청 실패: ${response.status} (${url})`)
-      return null
-    }
-
-    return await response.text()
-  } catch (error) {
-    console.error("⚠️  네이버 뉴스 HTML 요청 중 오류:", error)
+  const html = await fetchHtml(url, 8000)
+  if (!html) {
+    console.warn(`⚠️  네이버 뉴스 HTML 요청 실패: ${url}`)
     return null
   }
+  return html
 }
 
 async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
@@ -654,11 +581,6 @@ async function persistArticles(articles: NormalizedArticle[]): Promise<NewsInges
   }
 
   return { fetched: articles.length, persisted, skipped }
-}
-
-async function fetchNewsFromAPI(options: { category: NewsCategory; limit?: number }): Promise<NormalizedArticle[]> {
-  console.warn("⚠️  fetchNewsFromAPI는 더 이상 사용되지 않습니다. 네이버 HTML 크롤러를 사용하세요.")
-  return []
 }
 
 // 최신 뉴스 수집 진입점
