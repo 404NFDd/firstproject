@@ -36,6 +36,9 @@ export default function ProfilePage() {
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   useEffect(() => {
+    // 프로필 초기 로딩
+    // Input: 현재 로그인 세션 쿠키(서버에서 검증)
+    // Output: user/formData/emailSubscribed 상태를 초기화, 미인증이면 로그인 페이지로 이동
     const fetchUser = async () => {
       try {
         const response = await fetch("/api/auth/me")
@@ -64,6 +67,9 @@ export default function ProfilePage() {
     fetchUser()
   }, [router])
 
+  // 안전한 로그인 페이지 리다이렉트 래퍼
+  // Input: 없음
+  // Output: signOut 콜백으로 /auth/login 이동
   const redirectToLogin = async () => {
     try {
       await signOut({ callbackUrl: "/auth/login" })
@@ -72,6 +78,9 @@ export default function ProfilePage() {
     }
   }
 
+  // 로그아웃 처리
+  // Input: 없음
+  // Output: 서버 로그아웃 API 호출 후 로그인 페이지 이동
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
@@ -82,6 +91,9 @@ export default function ProfilePage() {
     }
   }
 
+  // 프로필 저장
+  // Input: formData(name)
+  // Output: 성공 시 user 상태 갱신 및 편집 모드 종료
   const handleSaveProfile = async () => {
     try {
       const response = await fetch("/api/auth/profile", {
@@ -100,6 +112,9 @@ export default function ProfilePage() {
     }
   }
 
+  // 이메일 브리핑 구독 상태 변경
+  // Input: subscribe(true=구독, false=해제)
+  // Output: 성공 시 emailSubscribed/다이얼로그 상태 반영
   const handleToggleEmailSubscription = async (subscribe: boolean) => {
     if (togglingEmail) return
     setTogglingEmail(true)
@@ -125,6 +140,9 @@ export default function ProfilePage() {
     setShowUnsubscribeDialog(true)
   }
 
+  // 테스트 브리핑 메일 발송
+  // Input: 없음(현재 로그인 사용자 이메일 사용)
+  // Output: alert로 성공/실패 결과 표시
   const handleSendTestEmail = async () => {
     if (sendingTestEmail) return
     setSendingTestEmail(true)

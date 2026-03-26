@@ -23,11 +23,17 @@ export function NewsCard({
   onSendEmail,
 }: NewsCardProps) {
 
+  // 카드 내부 이메일 버튼 클릭 처리
+  // Input: 클릭 이벤트, 현재 카드 id
+  // Output: 링크 이동을 막고 상위 onSendEmail 콜백 실행
   const handleSendEmail = async (e: React.MouseEvent) => {
     e.preventDefault()
     onSendEmail?.(id)
   }
 
+  // 날짜 포맷터
+  // Input: ISO/Date 문자열
+  // Output: ko-KR 기준 "월 일 시:분" 형식 문자열
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("ko-KR", {
       month: "short",
@@ -38,6 +44,8 @@ export function NewsCard({
   }
 
   // HTML 엔티티 디코딩
+  // Input: 엔티티가 포함된 문자열(또는 null/undefined)
+  // Output: 디코딩된 일반 문자열
   const decodeHtmlEntities = (text: string | null | undefined): string => {
     if (!text || typeof text !== "string") return ""
     if (typeof window === "undefined") return text
