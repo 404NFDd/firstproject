@@ -2,14 +2,35 @@ import { NextResponse, type NextRequest } from "next/server"
 import { ingestLatestNews, SUPPORTED_NEWS_CATEGORIES } from "@/lib/news-service"
 import { prisma } from "@/lib/prisma"
 
-function authorize(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) {
-    return true
+function getRequestCronSecret(request: NextRequest): { value: string | null; source: string } {
+  const headerSecret = request.headers.get("x-cron-secret")
+  if (headerSecret) {
+    return { value: headerSecret, source: "x-cron-secret" }
   }
 
-  const headerValue = request.headers.get("x-cron-secret")
-  return headerValue === cronSecret
+  const authorization = request.headers.get("authorization")
+  if (authorization?.startsWith("Bearer ")) {
+    return { value: authorization.slice("Bearer ".length).trim(), source: "authorization-bearer" }
+  }
+
+  return { value: null, source: "missing" }
+}
+
+function authorize(request: NextRequest): { ok: boolean; reason: string } {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return { ok: true, reason: "cron-secret-disabled" }
+  }
+
+  const { value, source } = getRequestCronSecret(request)
+  if (!value) {
+    return { ok: false, reason: "missing-secret-header" }
+  }
+
+  return {
+    ok: value === cronSecret,
+    reason: value === cronSecret ? `authorized-via-${source}` : `secret-mismatch-via-${source}`,
+  }
 }
 
 /**
@@ -37,7 +58,9 @@ async function checkRecentSync(): Promise<{ canSync: boolean; lastSyncAt: Date |
 }
 
 export async function POST(request: NextRequest) {
-  if (!authorize(request)) {
+  const auth = authorize(request)
+  if (!auth.ok) {
+    console.warn(`[news-sync] Unauthorized request: ${auth.reason}`)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

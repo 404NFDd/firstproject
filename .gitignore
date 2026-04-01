@@ -52,6 +52,7 @@ prisma/dev.db-journal
 .cache/
 
 # Misc
+.cursor/
 .cursorignore
 .cursorindexingignore
 .npm/

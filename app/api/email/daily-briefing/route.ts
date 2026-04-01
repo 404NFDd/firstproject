@@ -1,6 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sendDailyBriefing } from "@/lib/daily-briefing"
 
+function getRequestCronSecret(request: NextRequest): { value: string | null; source: string } {
+  const headerSecret = request.headers.get("x-cron-secret")
+  if (headerSecret) {
+    return { value: headerSecret, source: "x-cron-secret" }
+  }
+
+  const authorization = request.headers.get("authorization")
+  if (authorization?.startsWith("Bearer ")) {
+    return { value: authorization.slice("Bearer ".length).trim(), source: "authorization-bearer" }
+  }
+
+  return { value: null, source: "missing" }
+}
+
 /**
  * 일일 브리핑 메일을 전송합니다 (Cron Job용)
  */
@@ -8,8 +22,10 @@ export async function POST(request: NextRequest) {
   // Cron Secret 인증 (선택사항)
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret) {
-    const headerValue = request.headers.get("x-cron-secret")
-    if (headerValue !== cronSecret) {
+    const { value, source } = getRequestCronSecret(request)
+    if (!value || value !== cronSecret) {
+      const reason = !value ? "missing-secret-header" : `secret-mismatch-via-${source}`
+      console.warn(`[daily-briefing] Unauthorized request: ${reason}`)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
   }
