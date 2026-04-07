@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `News` MODIFY `category` VARCHAR(191) NOT NULL DEFAULT '100';

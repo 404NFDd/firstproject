@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { ingestLatestNews, SUPPORTED_NEWS_CATEGORIES } from "@/lib/news-service"
 import { prisma } from "@/lib/prisma"
+import { getAccessToken, verifyAccessToken } from "@/lib/auth"
 
 function getRequestCronSecret(request: NextRequest): { value: string | null; source: string } {
   const headerSecret = request.headers.get("x-cron-secret")
@@ -16,33 +17,42 @@ function getRequestCronSecret(request: NextRequest): { value: string | null; sou
   return { value: null, source: "missing" }
 }
 
-function authorize(request: NextRequest): { ok: boolean; reason: string } {
+async function authorize(request: NextRequest): Promise<{ ok: boolean; reason: string }> {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) {
     return { ok: true, reason: "cron-secret-disabled" }
   }
 
   const { value, source } = getRequestCronSecret(request)
-  if (!value) {
-    return { ok: false, reason: "missing-secret-header" }
+  if (value && value === cronSecret) {
+    return { ok: true, reason: `authorized-via-${source}` }
   }
 
-  return {
-    ok: value === cronSecret,
-    reason: value === cronSecret ? `authorized-via-${source}` : `secret-mismatch-via-${source}`,
+  const accessToken = await getAccessToken()
+  if (accessToken) {
+    const payload = await verifyAccessToken(accessToken)
+    if (payload) {
+      return { ok: true, reason: "authorized-via-user-session" }
+    }
   }
+
+  if (!value) {
+    return { ok: false, reason: "missing-secret-header-and-session" }
+  }
+
+  return { ok: false, reason: `secret-mismatch-via-${source}` }
 }
 
 /**
- * 10분 이내에 동기화가 실행되었는지 확인
+ * 1시간 이내에 동기화가 실행되었는지 확인
  */
 async function checkRecentSync(): Promise<{ canSync: boolean; lastSyncAt: Date | null }> {
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
 
   const lastSync = await prisma.newsSyncLog.findFirst({
     where: {
       createdAt: {
-        gte: tenMinutesAgo,
+        gte: oneHourAgo,
       },
       status: "success",
     },
@@ -58,24 +68,24 @@ async function checkRecentSync(): Promise<{ canSync: boolean; lastSyncAt: Date |
 }
 
 export async function POST(request: NextRequest) {
-  const auth = authorize(request)
+  const auth = await authorize(request)
   if (!auth.ok) {
     console.warn(`[news-sync] Unauthorized request: ${auth.reason}`)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    // 10분 이내 동기화 확인
+    // 1시간 이내 동기화 확인
     const { canSync, lastSyncAt } = await checkRecentSync()
 
     if (!canSync) {
       const waitTime = lastSyncAt
-        ? Math.ceil((10 * 60 * 1000 - (Date.now() - lastSyncAt.getTime())) / 1000)
+        ? Math.max(0, Math.ceil((60 * 60 * 1000 - (Date.now() - lastSyncAt.getTime())) / 1000))
         : 0
       return NextResponse.json(
         {
           ok: false,
-          error: "최근 10분 이내에 동기화가 실행되었습니다.",
+          error: "최근 1시간 이내에 동기화가 실행되었습니다.",
           lastSyncAt: lastSyncAt?.toISOString(),
           waitTime,
           message: `${waitTime}초 후에 다시 시도해주세요.`,
@@ -134,6 +144,12 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error syncing news:", error)
+    if (error instanceof Error && error.name === "PrismaClientInitializationError") {
+      return NextResponse.json(
+        { error: "DB 서버에 연결할 수 없습니다. 데이터베이스 상태를 확인해주세요." },
+        { status: 503 },
+      )
+    }
     return NextResponse.json({ error: "뉴스 동기화 실패" }, { status: 500 })
   }
 }
