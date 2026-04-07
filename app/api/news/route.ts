@@ -26,6 +26,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data)
   } catch (error) {
     console.error("[v0] Error fetching news:", error)
+    if (error instanceof Error && error.name === "PrismaClientInitializationError") {
+      return NextResponse.json(
+        { error: "DB 서버에 연결할 수 없습니다. 데이터베이스 상태를 확인해주세요." },
+        { status: 503 },
+      )
+    }
     return NextResponse.json({ error: "뉴스를 불러올 수 없습니다." }, { status: 500 })
   }
 }

@@ -65,6 +65,9 @@ export default function Dashboard() {
           `/api/news?page=${pageNum}&limit=12${categoryParam ? `&category=${categoryParam}` : ""}`
         )
         const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || "뉴스를 불러올 수 없습니다.")
+        }
 
         const newArticles = data.news || []
 
@@ -121,17 +124,14 @@ export default function Dashboard() {
           title: "알림",
           description: data.message || "최근 1시간 이내에 이미 뉴스를 수집했습니다. 피드만 새로고침합니다.",
         })
-        return
-      }
-
-      if (!response.ok) {
+      } else if (!response.ok) {
         throw new Error(data.error || "뉴스 수집 실패")
+      } else {
+        toast({
+          title: "성공",
+          description: `요청 ${data.fetched}건 / 저장 ${data.persisted}건 / 중복 ${data.skipped}건`,
+        })
       }
-
-      toast({
-        title: "성공",
-        description: `요청 ${data.fetched}건 / 저장 ${data.persisted}건 / 중복 ${data.skipped}건`,
-      })
     } catch (error) {
       console.error("[v0] Error syncing news:", error)
       toast({

@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     if (!canSync) {
       const waitTime = lastSyncAt
-        ? Math.ceil((60 * 60 * 1000 - (Date.now() - lastSyncAt.getTime())) / 1000)
+        ? Math.max(0, Math.ceil((60 * 60 * 1000 - (Date.now() - lastSyncAt.getTime())) / 1000))
         : 0
       return NextResponse.json(
         {
@@ -144,6 +144,12 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error syncing news:", error)
+    if (error instanceof Error && error.name === "PrismaClientInitializationError") {
+      return NextResponse.json(
+        { error: "DB 서버에 연결할 수 없습니다. 데이터베이스 상태를 확인해주세요." },
+        { status: 503 },
+      )
+    }
     return NextResponse.json({ error: "뉴스 동기화 실패" }, { status: 500 })
   }
 }
