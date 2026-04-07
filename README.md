@@ -332,7 +332,7 @@ firstproject/
 
 **GET /api/news** - 뉴스 목록 (쿼리: page, limit, category, search, sort)  
 **GET /api/news/[id]** - 뉴스 상세  
-**POST /api/news/sync** - 뉴스 수집 (10분당 1회 제한)  
+**POST /api/news/sync** - 뉴스 수집 (1시간당 1회 제한)  
 **POST /api/news/send-email** - 뉴스 이메일 발송  
 
 ### 이메일
@@ -352,14 +352,14 @@ firstproject/
 
 로컬:
 ```bash
-curl -X POST http://localhost:3000/api/news/sync
+curl -X POST http://localhost:3000/api/news/sync -H "x-cron-secret: YOUR_SECRET"
 ```
 
 Vercel Cron (`vercel.json`):
 ```json
 {
   "crons": [
-    { "path": "/api/news/sync", "schedule": "*/10 * * * *" },
+    { "path": "/api/news/sync", "schedule": "0 * * * *" },
     { "path": "/api/email/daily-briefing", "schedule": "0 7 * * *" }
   ]
 }
@@ -367,9 +367,13 @@ Vercel Cron (`vercel.json`):
 
 자체 서버 (crontab):
 ```
-*/10 * * * * curl -X POST https://your-app.com/api/news/sync -H "x-cron-secret: YOUR_SECRET"
+0 * * * * curl -X POST https://your-app.com/api/news/sync -H "x-cron-secret: YOUR_SECRET"
 0 7 * * * curl -X POST https://your-app.com/api/email/daily-briefing -H "x-cron-secret: YOUR_SECRET"
 ```
+
+인증 정책:
+- 브라우저에서 버튼으로 호출하는 `/api/news/sync`는 로그인 세션(`accessToken` 쿠키)으로 인증됩니다.
+- cron/서버 호출은 `x-cron-secret`(또는 `Authorization: Bearer`) 헤더로 인증됩니다.
 
 ## AI 요약 및 일일 브리핑
 
@@ -383,7 +387,7 @@ Google Gemini 1.5 Flash로 뉴스를 2-3문장으로 요약합니다. 요약 결
 - JWT 토큰 (Access 15분, Refresh 7일)
 - HttpOnly 쿠키
 - Prisma ORM 사용
-- 뉴스 수집 10분당 1회 제한
+- 뉴스 수집 1시간당 1회 제한
 
 ## 반응형 디자인
 
@@ -400,7 +404,8 @@ Google Gemini 1.5 Flash로 뉴스를 2-3문장으로 요약합니다. 요약 결
 - 또는 `npx prisma db push`
 
 **뉴스 수집 실패**
-- 로그 확인 후 수동 테스트: `curl -X POST http://localhost:3000/api/news/sync`
+- 로그 확인 후 수동 테스트: `curl -X POST http://localhost:3000/api/news/sync -H "x-cron-secret: YOUR_SECRET"`
+- `429 Too Many Requests`면 최근 1시간 내 수집 완료 상태이며, 버튼 클릭 시 피드만 새로고침됩니다.
 
 **이메일 발송 실패**
 - SMTP 설정 확인 (Gmail은 앱 비밀번호 필요)

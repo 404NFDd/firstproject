@@ -115,17 +115,12 @@ export default function Dashboard() {
 
       const data = await response.json()
 
-      // 10분 이내 요청 제한 (429 Too Many Requests)
+      // 1시간 이내 요청 제한 (429 Too Many Requests)
       if (response.status === 429) {
-        // 로딩 상태를 유지하다가 잠시 후 원래대로
-        const waitTime = data.waitTime || 5 // 최소 5초
-        await new Promise((resolve) => setTimeout(resolve, Math.min(waitTime * 1000, 5000)))
-
         toast({
           title: "알림",
-          description: data.message || "최근 10분 이내에 이미 뉴스를 수집했습니다. 잠시 후 다시 시도해주세요.",
+          description: data.message || "최근 1시간 이내에 이미 뉴스를 수집했습니다. 피드만 새로고침합니다.",
         })
-        setSyncing(false)
         return
       }
 
@@ -135,11 +130,8 @@ export default function Dashboard() {
 
       toast({
         title: "성공",
-        description: `뉴스 ${data.persisted}개를 수집했습니다.`,
+        description: `요청 ${data.fetched}건 / 저장 ${data.persisted}건 / 중복 ${data.skipped}건`,
       })
-
-      // 수집 후 뉴스 다시 불러오기
-      await fetchNews(1, false)
     } catch (error) {
       console.error("[v0] Error syncing news:", error)
       toast({
@@ -148,6 +140,8 @@ export default function Dashboard() {
         variant: "destructive",
       })
     } finally {
+      // 수집 성공/제한/실패 여부와 관계없이 버튼 클릭 시 피드를 한 번 새로고침
+      await fetchNews(1, false)
       setSyncing(false)
     }
   }, [syncing, toast, fetchNews])

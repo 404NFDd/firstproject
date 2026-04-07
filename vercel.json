@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/news/sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/email/daily-briefing",
