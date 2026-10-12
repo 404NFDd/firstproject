@@ -1,20 +1,32 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyAccessToken } from "@/lib/auth"
+import { z } from "zod"
+import { getRequestUser } from "@/lib/request-auth"
 import { prisma } from "@/lib/prisma"
 
+const subscriptionSchema = z.object({ subscribe: z.boolean() })
+
 /**
- * 메일 구독 상태를 토글합니다
+ * 메일 구독 상태를 설정합니다
  */
 export async function POST(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get("accessToken")?.value
-    const payload = await verifyAccessToken(accessToken || "")
+    const payload = await getRequestUser(request)
 
     if (!payload) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
     }
 
-    const { subscribe } = await request.json()
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: "JSON 형식이 올바르지 않습니다." }, { status: 400 })
+    }
+    const parsed = subscriptionSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "subscribe는 true 또는 false여야 합니다." }, { status: 400 })
+    }
+    const { subscribe } = parsed.data
 
     // 구독 상태 업데이트 (1: 구독, 0: 구독 해제)
     const emailSubscription = subscribe === true ? 1 : 0
@@ -35,7 +47,7 @@ export async function POST(request: NextRequest) {
       message: emailSubscription === 1 ? "메일 구독이 활성화되었습니다." : "메일 구독이 해제되었습니다.",
     })
   } catch (error) {
-    console.error("[v0] Error toggling email subscription:", error)
+    console.error("메일 구독 변경 실패:", error)
     return NextResponse.json({ error: "구독 설정 변경에 실패했습니다." }, { status: 500 })
   }
 }
@@ -45,8 +57,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get("accessToken")?.value
-    const payload = await verifyAccessToken(accessToken || "")
+    const payload = await getRequestUser(request)
 
     if (!payload) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
       emailSubscription: user.emailSubscription === 1,
     })
   } catch (error) {
-    console.error("[v0] Error getting email subscription:", error)
+    console.error("메일 구독 조회 실패:", error)
     return NextResponse.json({ error: "구독 상태 조회에 실패했습니다." }, { status: 500 })
   }
 }

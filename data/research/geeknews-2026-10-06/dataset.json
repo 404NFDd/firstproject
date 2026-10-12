@@ -1,0 +1,3958 @@
+{
+  "metadata": {
+    "collectedDateKst": "2026-10-06",
+    "compiledAt": "2026-10-06T08:13:05.720Z",
+    "method": "공개 브라우저 DOM의 목록 링크·게시 시각·종류를 읽고 게시물 ID로 중복 제거",
+    "scope": "메인 3페이지·최신글 2페이지·GN+ 3페이지의 조사 시점 표본",
+    "pages": [
+      {
+        "id": 1,
+        "section": "main",
+        "url": "https://news.hada.io/",
+        "observedRows": 20
+      },
+      {
+        "id": 2,
+        "section": "main",
+        "url": "https://news.hada.io/?page=2",
+        "observedRows": 20
+      },
+      {
+        "id": 3,
+        "section": "main",
+        "url": "https://news.hada.io/?page=3",
+        "observedRows": 20
+      },
+      {
+        "id": 4,
+        "section": "new",
+        "url": "https://news.hada.io/new",
+        "observedRows": 20
+      },
+      {
+        "id": 5,
+        "section": "new",
+        "url": "https://news.hada.io/new?page=2",
+        "observedRows": 12
+      },
+      {
+        "id": 6,
+        "section": "plus",
+        "url": "https://news.hada.io/plus",
+        "observedRows": 20
+      },
+      {
+        "id": 7,
+        "section": "plus",
+        "url": "https://news.hada.io/plus?page=2",
+        "observedRows": 20
+      },
+      {
+        "id": 8,
+        "section": "plus",
+        "url": "https://news.hada.io/plus?page=3",
+        "observedRows": 20
+      }
+    ],
+    "counts": {
+      "pageCount": 8,
+      "observations": 152,
+      "uniqueTopics": 116,
+      "externalNewsTopics": 106,
+      "sourceDomains": 87,
+      "showTopics": 9,
+      "askTopics": 1,
+      "homepagesChecked": 13,
+      "homepagesWithVerifiedFeed": 8,
+      "verifiedFeedUrls": 9
+    },
+    "geeknewsPostRangeKst": {
+      "earliest": "2026-09-29T02:43:43+09:00",
+      "latest": "2026-10-06T17:04:32+09:00"
+    },
+    "rawCanonicalFNV1a32": "eb75b818",
+    "limitations": [
+      "게시 시각은 GeekNews 등록 시각이며 원문 발행일이 아닙니다.",
+      "현재 표본은 전체 아카이브·전체 출처·공식 수집 소스 목록을 뜻하지 않습니다.",
+      "Show·Ask의 내부 링크는 원문 URL로 간주하지 않아 출처 집계에서 제외했습니다.",
+      "메인·최신글·GN+를 읽는 동안 페이지 내용과 순위가 달라질 수 있습니다.",
+      "출처별 본문 확보·서비스 저장·번역·수집 허용 범위는 검증하지 않았습니다.",
+      "RSS 응답과 본문 필드의 존재는 기사 전체 본문 제공을 보증하지 않습니다.",
+      "댓글·요약·기사 전체 본문은 수집하지 않았습니다."
+    ],
+    "supplementedDateKst": "2026-10-07"
+  },
+  "sources": [
+    {
+      "domain": "github.com",
+      "publisher_type": "오픈소스 저장소",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 13,
+      "observation_count": 19,
+      "main_topic_count": 7,
+      "new_topic_count": 9,
+      "plus_topic_count": 3,
+      "example_original_url": "https://github.com/mvschwarz/openrig",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34854",
+      "all_original_urls": [
+        "https://github.com/mvschwarz/openrig",
+        "https://github.com/omlahore/RemoveMacAI",
+        "https://github.com/picomq/picomq",
+        "https://github.com/Niko1221/Strata",
+        "https://github.com/CopilotKit/OpenMuse",
+        "https://github.com/deepakness/cogsend",
+        "https://github.com/Tencent/AI-Infra-Guard",
+        "https://github.com/traycerai/traycer",
+        "https://github.com/jeffhajewski/latticedb",
+        "https://github.com/tscmoo/pluto",
+        "https://github.com/nobodywho-ooo/nobodywho",
+        "https://github.com/eolix/photosuite/issues/77",
+        "https://github.com/rui314/mold/releases/tag/v3.0.0"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34854",
+        "https://news.hada.io/topic?id=34779",
+        "https://news.hada.io/topic?id=34694",
+        "https://news.hada.io/topic?id=34761",
+        "https://news.hada.io/topic?id=34790",
+        "https://news.hada.io/topic?id=34739",
+        "https://news.hada.io/topic?id=34645",
+        "https://news.hada.io/topic?id=34575",
+        "https://news.hada.io/topic?id=34517",
+        "https://news.hada.io/topic?id=34474",
+        "https://news.hada.io/topic?id=34463",
+        "https://news.hada.io/topic?id=34881",
+        "https://news.hada.io/topic?id=34832"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "개별 글·프로젝트 선별"
+    },
+    {
+      "domain": "youtube.com",
+      "publisher_type": "영상",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 3,
+      "observation_count": 6,
+      "main_topic_count": 3,
+      "new_topic_count": 0,
+      "plus_topic_count": 3,
+      "example_original_url": "https://www.youtube.com/watch?v=KhjhRRz3VJw",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34857",
+      "all_original_urls": [
+        "https://www.youtube.com/watch?v=KhjhRRz3VJw",
+        "https://www.youtube.com/watch?v=J31LlAUtoos",
+        "https://www.youtube.com/watch?v=GLvFTMtw4Jk"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34857",
+        "https://news.hada.io/topic?id=34859",
+        "https://news.hada.io/topic?id=34813"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "개별 글·프로젝트 선별"
+    },
+    {
+      "domain": "blog.cloudflare.com",
+      "publisher_type": "기업 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 2,
+      "observation_count": 3,
+      "main_topic_count": 2,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34749",
+      "all_original_urls": [
+        "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+        "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34749",
+        "https://news.hada.io/topic?id=34719"
+      ],
+      "existing_source_ids": [
+        "cloudflare"
+      ],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://blog.cloudflare.com/rss/"
+      ],
+      "recommendation": "기존 연결 유지",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://blog.cloudflare.com/rss/",
+        "observedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "matchedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "latestFeedDate": "2026-10-05T13:00:00.000Z"
+      }
+    },
+    {
+      "domain": "claude.com",
+      "publisher_type": "기업 문서·블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 2,
+      "observation_count": 3,
+      "main_topic_count": 1,
+      "new_topic_count": 1,
+      "plus_topic_count": 1,
+      "example_original_url": "https://claude.com/blog/the-ai-native-sdlc-playbook",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34792",
+      "all_original_urls": [
+        "https://claude.com/blog/the-ai-native-sdlc-playbook",
+        "https://claude.com/docs/connectors/building/mcpb?open_in_browser=1"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34792",
+        "https://news.hada.io/topic?id=34822"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "claude.dev",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 2,
+      "observation_count": 4,
+      "main_topic_count": 2,
+      "new_topic_count": 0,
+      "plus_topic_count": 2,
+      "example_original_url": "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34734",
+      "all_original_urls": [
+        "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+        "https://claude.dev/blog/getting-started-with-claude-code-mods/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34734",
+        "https://news.hada.io/topic?id=34796"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "fosscomics.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 2,
+      "observation_count": 2,
+      "main_topic_count": 0,
+      "new_topic_count": 2,
+      "plus_topic_count": 0,
+      "example_original_url": "https://fosscomics.com/ko/posts/11.%20BSD%20Unix%20Part%201%20-%20Unix%20Code%20Goes%20to%20UC%20Berkeley/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34589",
+      "all_original_urls": [
+        "https://fosscomics.com/ko/posts/11.%20BSD%20Unix%20Part%201%20-%20Unix%20Code%20Goes%20to%20UC%20Berkeley/",
+        "https://fosscomics.com/ko/posts/10.%20The%20Life%20of%20Dennis%20Ritchie/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34589",
+        "https://news.hada.io/topic?id=34450"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "nobelprize.org",
+      "publisher_type": "기관 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 2,
+      "observation_count": 2,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 2,
+      "example_original_url": "https://www.nobelprize.org/prizes/medicine/2026/summary/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34848",
+      "all_original_urls": [
+        "https://www.nobelprize.org/prizes/medicine/2026/summary/",
+        "https://www.nobelprize.org/prizes/medicine/2026/press-release/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34848",
+        "https://news.hada.io/topic?id=34829"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "2026.stateofdevs.com",
+      "publisher_type": "개발자 설문·연례 보고서",
+      "type_basis": "공식 About 페이지에서 Devographics 운영과 설문 목적 확인",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://2026.stateofdevs.com/en-US",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34858",
+      "all_original_urls": [
+        "https://2026.stateofdevs.com/en-US"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34858"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "보고서 응답 확인, 공개 피드 링크 미발견",
+      "verified_feed_urls": [],
+      "recommendation": "사용자 지정 수집 후보. 개발 분야의 연례 보고서로 수집하며 본문·도표 및 발행일 검증 후 연결"
+    },
+    {
+      "domain": "alfadur7.github.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://alfadur7.github.io/llm-wiki-newsroom/ko/scooping-stones/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34483",
+      "all_original_urls": [
+        "https://alfadur7.github.io/llm-wiki-newsroom/ko/scooping-stones/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34483"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "arslan.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://arslan.io/2026/10/05/the-lamps-in-my-house/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34850",
+      "all_original_urls": [
+        "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34850"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://arslan.io/rss/"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://arslan.io/rss/",
+        "observedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "matchedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "latestFeedDate": "2026-10-05T14:00:54.000Z"
+      }
+    },
+    {
+      "domain": "arstechnica.com",
+      "publisher_type": "기술 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://arstechnica.com/tech-policy/2026/10/texas-city-demands-2m-for-public-records-on-flock-usage/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34869",
+      "all_original_urls": [
+        "https://arstechnica.com/tech-policy/2026/10/texas-city-demands-2m-for-public-records-on-flock-usage/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34869"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "barrons.com",
+      "publisher_type": "경제 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.barrons.com/news/norway-eyes-partial-ban-of-smart-glasses-e65dc239",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34849",
+      "all_original_urls": [
+        "https://www.barrons.com/news/norway-eyes-partial-ban-of-smart-glasses-e65dc239"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34849"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.buenzli.dev",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://blog.buenzli.dev/flirt-is-open-source/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34852",
+      "all_original_urls": [
+        "https://blog.buenzli.dev/flirt-is-open-source/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34852"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.google",
+      "publisher_type": "기업 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://blog.google/intl/ko-kr/products/gemini-4-argon-kr/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34588",
+      "all_original_urls": [
+        "https://blog.google/intl/ko-kr/products/gemini-4-argon-kr/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34588"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.jim-nielsen.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://blog.jim-nielsen.com/2026/embarrassed-by-tech/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34844",
+      "all_original_urls": [
+        "https://blog.jim-nielsen.com/2026/embarrassed-by-tech/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34844"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.metabrainz.org",
+      "publisher_type": "프로젝트 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://blog.metabrainz.org/2026/10/04/picard-3-0-released/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34838",
+      "all_original_urls": [
+        "https://blog.metabrainz.org/2026/10/04/picard-3-0-released/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34838"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.sshh.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://blog.sshh.io/p/the-harness-is-the-company",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34718",
+      "all_original_urls": [
+        "https://blog.sshh.io/p/the-harness-is-the-company"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34718"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "blog.wonkooklee.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://blog.wonkooklee.com/docs/api-and-interfaces/browser-realtime/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34572",
+      "all_original_urls": [
+        "https://blog.wonkooklee.com/docs/api-and-interfaces/browser-realtime/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34572"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "brunch.co.kr",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://brunch.co.kr/brunchbook/ai-at-work",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34711",
+      "all_original_urls": [
+        "https://brunch.co.kr/brunchbook/ai-at-work"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34711"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "cedardb.com",
+      "publisher_type": "제품 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://cedardb.com/blog/sqldoom/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34815",
+      "all_original_urls": [
+        "https://cedardb.com/blog/sqldoom/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34815"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "cron.withuse.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://cron.withuse.io/cron-every-5-minutes/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34469",
+      "all_original_urls": [
+        "https://cron.withuse.io/cron-every-5-minutes/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34469"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "danbom425.tistory.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://danbom425.tistory.com/113",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34873",
+      "all_original_urls": [
+        "https://danbom425.tistory.com/113"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34873"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "dbushell.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://dbushell.com/2026/10/03/deno-to-node/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34851",
+      "all_original_urls": [
+        "https://dbushell.com/2026/10/03/deno-to-node/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34851"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "deadparrotbbs.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://deadparrotbbs.com/why-plain-text-is-still-one-of-the-best-technologies-we-have/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34843",
+      "all_original_urls": [
+        "https://deadparrotbbs.com/why-plain-text-is-still-one-of-the-best-technologies-we-have/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34843"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "debugbear.com",
+      "publisher_type": "제품 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.debugbear.com/blog/example-dot-com-redesign-history",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34872",
+      "all_original_urls": [
+        "https://www.debugbear.com/blog/example-dot-com-redesign-history"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34872"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "decipher99.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://decipher99.com/posts/tool-review/%ED%8B%80%EB%A0%B8%EB%8A%94%EB%8D%B0-%ED%99%95%EC%8B%A0%EC%9D%80-09%EC%98%80%EB%8B%A4/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34599",
+      "all_original_urls": [
+        "https://decipher99.com/posts/tool-review/%ED%8B%80%EB%A0%B8%EB%8A%94%EB%8D%B0-%ED%99%95%EC%8B%A0%EC%9D%80-09%EC%98%80%EB%8B%A4/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34599"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "diff.wikimedia.org",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://diff.wikimedia.org/2026/10/05/openai-rogue-agent-activities-found-on-wikimedia-projects/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34835",
+      "all_original_urls": [
+        "https://diff.wikimedia.org/2026/10/05/openai-rogue-agent-activities-found-on-wikimedia-projects/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34835"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "distantprovince.substack.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://distantprovince.substack.com/p/the-four-horsemen-of-agentic-coding",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34713",
+      "all_original_urls": [
+        "https://distantprovince.substack.com/p/the-four-horsemen-of-agentic-coding"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34713"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "dosdays.co.uk",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://dosdays.co.uk/topics/Software/borland_turbo_basic.php",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34840",
+      "all_original_urls": [
+        "https://dosdays.co.uk/topics/Software/borland_turbo_basic.php"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34840"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "earendil.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://earendil.com/posts/pi-durable/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34641",
+      "all_original_urls": [
+        "https://earendil.com/posts/pi-durable/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34641"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "elenaverna.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://www.elenaverna.com/p/what-its-like-to-work-at-an-ai-native",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34639",
+      "all_original_urls": [
+        "https://www.elenaverna.com/p/what-its-like-to-work-at-an-ai-native"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34639"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "flattensf.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://flattensf.com/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34862",
+      "all_original_urls": [
+        "https://flattensf.com/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34862"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "floreal.tech",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://floreal.tech/blog/2026/making-a-gtk-app-in-haskell-part-1/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34837",
+      "all_original_urls": [
+        "https://floreal.tech/blog/2026/making-a-gtk-app-in-haskell-part-1/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34837"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "fsdatalab.github.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://fsdatalab.github.io/blog/introducing-quail/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34860",
+      "all_original_urls": [
+        "https://fsdatalab.github.io/blog/introducing-quail/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34860"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "ftl-os.org",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://ftl-os.org/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34729",
+      "all_original_urls": [
+        "https://ftl-os.org/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34729"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "gadgets.muse.ai",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://gadgets.muse.ai/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34702",
+      "all_original_urls": [
+        "https://gadgets.muse.ai/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34702"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "getartcraft.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://getartcraft.com/apps",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34809",
+      "all_original_urls": [
+        "https://getartcraft.com/apps"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34809"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "gleam.run",
+      "publisher_type": "프로젝트 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://gleam.run/news/gleam-doesnt-compile-to-erlang-source-anymore/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34874",
+      "all_original_urls": [
+        "https://gleam.run/news/gleam-doesnt-compile-to-erlang-source-anymore/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34874"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "herecomesthemoon.net",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://herecomesthemoon.net/2026/10/async-rust-where-does-the-scheduler-live/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34882",
+      "all_original_urls": [
+        "https://herecomesthemoon.net/2026/10/async-rust-where-does-the-scheduler-live/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34882"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "insufferable.dev",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://insufferable.dev/posts/the-ai-race-just-got-awkward/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34552",
+      "all_original_urls": [
+        "https://insufferable.dev/posts/the-ai-race-just-got-awkward/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34552"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "iroh.computer",
+      "publisher_type": "제품 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.iroh.computer/blog/iroh-global-content-discovery",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34879",
+      "all_original_urls": [
+        "https://www.iroh.computer/blog/iroh-global-content-discovery"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34879"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "jacobg.co",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://jacobg.co/emails-at-jacobg-co/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34842",
+      "all_original_urls": [
+        "https://jacobg.co/emails-at-jacobg-co/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34842"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "kciter.so",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://kciter.so/posts/server-monitoring-analysis-guide/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34478",
+      "all_original_urls": [
+        "https://kciter.so/posts/server-monitoring-analysis-guide/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34478"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://kciter.so/feed.xml"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://kciter.so/feed.xml",
+        "observedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "matchedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "latestFeedDate": "2026-07-20T00:00:00.000Z"
+      }
+    },
+    {
+      "domain": "lambdadb.ai",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://lambdadb.ai/blog/introducing-data-versioning",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34472",
+      "all_original_urls": [
+        "https://lambdadb.ai/blog/introducing-data-versioning"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34472"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "liao.gg",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://liao.gg/blog/agents-dont-need-memory",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34750",
+      "all_original_urls": [
+        "https://liao.gg/blog/agents-dont-need-memory"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34750"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "liner.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://liner.com/ko/blog/liner-pencil-design-harness",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34582",
+      "all_original_urls": [
+        "https://liner.com/ko/blog/liner-pencil-design-harness"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34582"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "matduggan.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://matduggan.com/what-does-my-dream-os-ui-look-like/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34720",
+      "all_original_urls": [
+        "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34720"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://matduggan.com/rss/"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://matduggan.com/rss/",
+        "observedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "matchedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "latestFeedDate": "2026-10-02T10:30:51.000Z"
+      }
+    },
+    {
+      "domain": "metedata.substack.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://metedata.substack.com/p/what-meta-got-right-with-muse",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34770",
+      "all_original_urls": [
+        "https://metedata.substack.com/p/what-meta-got-right-with-muse"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34770"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "molily.de",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://molily.de/web-dev-education/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34647",
+      "all_original_urls": [
+        "https://molily.de/web-dev-education/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34647"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "news.ycombinator.com",
+      "publisher_type": "커뮤니티",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://news.ycombinator.com/item?id=49964045",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34845",
+      "all_original_urls": [
+        "https://news.ycombinator.com/item?id=49964045"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34845"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "개별 글·프로젝트 선별"
+    },
+    {
+      "domain": "niemanlab.org",
+      "publisher_type": "전문 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.niemanlab.org/2026/10/chatgpt-is-adding-real-cartoonists-signatures-to-fake-new-yorker-cartoons/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34856",
+      "all_original_urls": [
+        "https://www.niemanlab.org/2026/10/chatgpt-is-adding-real-cartoonists-signatures-to-fake-new-yorker-cartoons/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34856"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "nolanlawson.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34753",
+      "all_original_urls": [
+        "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34753"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://nolanlawson.com/feed/",
+        "https://nolanlawson.com/feed/atom/"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://nolanlawson.com/feed/",
+        "observedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "matchedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "latestFeedDate": "2026-10-03T20:49:29.000Z"
+      }
+    },
+    {
+      "domain": "offrun.dev",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://offrun.dev/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34783",
+      "all_original_urls": [
+        "https://offrun.dev/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34783"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "ohhfishal.net",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://ohhfishal.net/Posts/claude",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34853",
+      "all_original_urls": [
+        "https://ohhfishal.net/Posts/claude"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34853"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "onlinelibrary.wiley.com",
+      "publisher_type": "학술 출판",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://onlinelibrary.wiley.com/doi/10.1002/eng2.70108",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34841",
+      "all_original_urls": [
+        "https://onlinelibrary.wiley.com/doi/10.1002/eng2.70108"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34841"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "onlys.ky",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://onlys.ky/independence-is-interdependence/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34836",
+      "all_original_urls": [
+        "https://onlys.ky/independence-is-interdependence/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34836"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "openai.com",
+      "publisher_type": "기업 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://openai.com/ko-KR/index/introducing-gpt-6-1-sol/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34500",
+      "all_original_urls": [
+        "https://openai.com/ko-KR/index/introducing-gpt-6-1-sol/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34500"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "홈페이지 접근 실패",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "pgr21.net",
+      "publisher_type": "커뮤니티",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://pgr21.net/freedom/107393",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34798",
+      "all_original_urls": [
+        "https://pgr21.net/freedom/107393"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34798"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "개별 글·프로젝트 선별"
+    },
+    {
+      "domain": "qlabs.sh",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://qlabs.sh/research/dust",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34868",
+      "all_original_urls": [
+        "https://qlabs.sh/research/dust"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34868"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "reflection.ai",
+      "publisher_type": "기업 발표",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://reflection.ai/blog/introducing-beam",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34839",
+      "all_original_urls": [
+        "https://reflection.ai/blog/introducing-beam"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34839"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "홈페이지에서 피드 링크 미발견",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "renatovaldes.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.renatovaldes.com/essays/the-head-of-design/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34864",
+      "all_original_urls": [
+        "https://www.renatovaldes.com/essays/the-head-of-design/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34864"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "sanspareilsmyn.github.io",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://sanspareilsmyn.github.io/blog/why-av-data-is-different/kr/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34805",
+      "all_original_urls": [
+        "https://sanspareilsmyn.github.io/blog/why-av-data-is-different/kr/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34805"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "simonwillison.net",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34744",
+      "all_original_urls": [
+        "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34744"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://simonwillison.net/atom/everything/"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://simonwillison.net/atom/everything/",
+        "observedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "matchedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "latestFeedDate": "2026-10-05T23:56:47.000Z"
+      }
+    },
+    {
+      "domain": "skamille.medium.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://skamille.medium.com/the-managers-path-in-the-age-of-ai-279cb6611d66",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34865",
+      "all_original_urls": [
+        "https://skamille.medium.com/the-managers-path-in-the-age-of-ai-279cb6611d66"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34865"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "ssp.sh",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://www.ssp.sh/brain/the-problem-is-not-the-ai-code-but-nobody-knows-anything-anymore/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34439",
+      "all_original_urls": [
+        "https://www.ssp.sh/brain/the-problem-is-not-the-ai-code-but-nobody-knows-anything-anymore/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34439"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "stillwet.art",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://stillwet.art/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34679",
+      "all_original_urls": [
+        "https://stillwet.art/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34679"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "stock-engineer.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://stock-engineer.com/claude-code-skill-pattern-reusable-agent-design/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34752",
+      "all_original_urls": [
+        "https://stock-engineer.com/claude-code-skill-pattern-reusable-agent-design/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34752"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "stratechery.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://stratechery.com/2026/apple-and-a-hackers-future/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34827",
+      "all_original_urls": [
+        "https://stratechery.com/2026/apple-and-a-hackers-future/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34827"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "substack.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://substack.com/home/post/p-216691876",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34581",
+      "all_original_urls": [
+        "https://substack.com/home/post/p-216691876"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34581"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "sujithjay.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://sujithjay.com/inventing-work",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34513",
+      "all_original_urls": [
+        "https://sujithjay.com/inventing-work"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34513"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "sunilpai.dev",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://sunilpai.dev/posts/the-task-isnt-the-job/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34789",
+      "all_original_urls": [
+        "https://sunilpai.dev/posts/the-task-isnt-the-job/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34789"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "techspot.com",
+      "publisher_type": "기술 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.techspot.com/news/114091-florida-woman-used-claude-diary-anthropic-reported-shoot.html",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34833",
+      "all_original_urls": [
+        "https://www.techspot.com/news/114091-florida-woman-used-claude-diary-anthropic-reported-shoot.html"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34833"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "홈페이지 접근 실패",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "terrytao.wordpress.com",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34870",
+      "all_original_urls": [
+        "https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34870"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "thedrive.com",
+      "publisher_type": "자동차 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.thedrive.com/news/high-diesel-prices-bankrupted-16-trucking-companies-in-just-30-days",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34875",
+      "all_original_urls": [
+        "https://www.thedrive.com/news/high-diesel-prices-bankrupted-16-trucking-companies-in-just-30-days"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34875"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "theguardian.com",
+      "publisher_type": "종합 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.theguardian.com/world/2026/oct/05/russia-lab-worker-possibly-dies-of-plague-siberia-quarantine-measures-irkutsk",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34834",
+      "all_original_urls": [
+        "https://www.theguardian.com/world/2026/oct/05/russia-lab-worker-possibly-dies-of-plague-siberia-quarantine-measures-irkutsk"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34834"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "thenewstack.io",
+      "publisher_type": "기술 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://thenewstack.io/openai-decision-api-luna",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34528",
+      "all_original_urls": [
+        "https://thenewstack.io/openai-decision-api-luna"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34528"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://thenewstack.io/blog/feed/"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://thenewstack.io/blog/feed/",
+        "observedOriginalUrls": [
+          "https://thenewstack.io/openai-decision-api-luna"
+        ],
+        "matchedOriginalUrls": [],
+        "latestFeedDate": "2026-10-05T21:55:12.000Z"
+      }
+    },
+    {
+      "domain": "thinkingsian.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://thinkingsian.com/writers-block-one-principle",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34466",
+      "all_original_urls": [
+        "https://thinkingsian.com/writers-block-one-principle"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34466"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "threedots.tech",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://threedots.tech/post/ddd-and-ai-coding/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34791",
+      "all_original_urls": [
+        "https://threedots.tech/post/ddd-and-ai-coding/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34791"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "공개 링크·응답 확인",
+      "verified_feed_urls": [
+        "https://threedots.tech/index.xml"
+      ],
+      "recommendation": "다음 연결 후보: 본문·날짜·품질 추가 검증",
+      "sample_feed_coverage": {
+        "checkedFeedUrl": "https://threedots.tech/index.xml",
+        "observedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "matchedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "latestFeedDate": "2026-08-19T22:00:00.000Z"
+      }
+    },
+    {
+      "domain": "turbopuffer.com",
+      "publisher_type": "제품 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://turbopuffer.com/blog/rip-vector-database",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34622",
+      "all_original_urls": [
+        "https://turbopuffer.com/blog/rip-vector-database"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34622"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "upstage.ai",
+      "publisher_type": "기업 기술 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://www.upstage.ai/blog/ko/solar-mini-4",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34738",
+      "all_original_urls": [
+        "https://www.upstage.ai/blog/ko/solar-mini-4"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34738"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "홈페이지에서 피드 링크 미발견",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "vals.ai",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.vals.ai/blogs/room-temperature-magnetic-semiconductors",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34847",
+      "all_original_urls": [
+        "https://www.vals.ai/blogs/room-temperature-magnetic-semiconductors"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34847"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "velog.io",
+      "publisher_type": "블로그 플랫폼",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://velog.io/@kimgh06/Three-Slicer-0.3.3-91%EC%B4%88%EB%A5%BC-10%EC%B4%88%EB%A1%9C-%EC%A4%84%EC%9D%B4%EB%A9%B4%EC%84%9C-%EC%B0%BE%EC%9D%80-%EA%B2%83%EB%93%A4",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34598",
+      "all_original_urls": [
+        "https://velog.io/@kimgh06/Three-Slicer-0.3.3-91%EC%B4%88%EB%A5%BC-10%EC%B4%88%EB%A1%9C-%EC%A4%84%EC%9D%B4%EB%A9%B4%EC%84%9C-%EC%B0%BE%EC%9D%80-%EA%B2%83%EB%93%A4"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34598"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "visualeaf.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 1,
+      "plus_topic_count": 0,
+      "example_original_url": "https://visualeaf.com/blog/postgresql-jsonb-query-update-index/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34597",
+      "all_original_urls": [
+        "https://visualeaf.com/blog/postgresql-jsonb-query-update-index/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34597"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "vivienhenz.com",
+      "publisher_type": "웹 출처(세부 유형 미확인)",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://www.vivienhenz.com/common-lisp",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34876",
+      "all_original_urls": [
+        "https://www.vivienhenz.com/common-lisp"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34876"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "wagtail.org",
+      "publisher_type": "프로젝트 블로그",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 0,
+      "example_original_url": "https://wagtail.org/blog/one-month-on-glm-53-flash/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34714",
+      "all_original_urls": [
+        "https://wagtail.org/blog/one-month-on-glm-53-flash/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34714"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "worksinprogress.co",
+      "publisher_type": "전문 매체",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 1,
+      "main_topic_count": 0,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://worksinprogress.co/issue/mosquitoes-are-a-choice/",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34830",
+      "all_original_urls": [
+        "https://worksinprogress.co/issue/mosquitoes-are-a-choice/"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34830"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "본문·출처 성격 확인 후 검토"
+    },
+    {
+      "domain": "x.com",
+      "publisher_type": "소셜 게시물",
+      "type_basis": "도메인·URL 기준의 검토용 분류이며 원문별 품질 판정이 아님",
+      "unique_topic_count": 1,
+      "observation_count": 2,
+      "main_topic_count": 1,
+      "new_topic_count": 0,
+      "plus_topic_count": 1,
+      "example_original_url": "https://x.com/philhchen/status/2072793818945167475",
+      "example_geeknews_url": "https://news.hada.io/topic?id=34793",
+      "all_original_urls": [
+        "https://x.com/philhchen/status/2072793818945167475"
+      ],
+      "all_geeknews_urls": [
+        "https://news.hada.io/topic?id=34793"
+      ],
+      "existing_source_ids": [],
+      "feed_check_status": "미검증",
+      "verified_feed_urls": [],
+      "recommendation": "개별 글·프로젝트 선별"
+    }
+  ],
+  "topics": [
+    {
+      "topic_id": "34857",
+      "linked_url": "https://www.youtube.com/watch?v=KhjhRRz3VJw",
+      "displayed_source": "(youtube.com)",
+      "geeknews_posted_at_kst": "2026-10-06T09:35:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34857"
+    },
+    {
+      "topic_id": "34865",
+      "linked_url": "https://skamille.medium.com/the-managers-path-in-the-age-of-ai-279cb6611d66",
+      "displayed_source": "(medium.com/@skamille)",
+      "geeknews_posted_at_kst": "2026-10-06T10:55:01+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34865"
+    },
+    {
+      "topic_id": "34835",
+      "linked_url": "https://diff.wikimedia.org/2026/10/05/openai-rogue-agent-activities-found-on-wikimedia-projects/",
+      "displayed_source": "(diff.wikimedia.org)",
+      "geeknews_posted_at_kst": "2026-10-06T04:42:46+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34835"
+    },
+    {
+      "topic_id": "34833",
+      "linked_url": "https://www.techspot.com/news/114091-florida-woman-used-claude-diary-anthropic-reported-shoot.html",
+      "displayed_source": "(techspot.com)",
+      "geeknews_posted_at_kst": "2026-10-06T02:39:13+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34833"
+    },
+    {
+      "topic_id": "34878",
+      "linked_url": "https://news.hada.io/topic?id=34878",
+      "displayed_source": "(github.com/ganggangstone)",
+      "geeknews_posted_at_kst": "2026-10-06T15:56:03+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        1
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34878"
+    },
+    {
+      "topic_id": "34877",
+      "linked_url": "https://news.hada.io/topic?id=34877",
+      "displayed_source": "(tryoreum.com)",
+      "geeknews_posted_at_kst": "2026-10-06T15:52:57+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        1
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34877"
+    },
+    {
+      "topic_id": "34791",
+      "linked_url": "https://threedots.tech/post/ddd-and-ai-coding/",
+      "displayed_source": "(threedots.tech)",
+      "geeknews_posted_at_kst": "2026-10-05T09:45:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34791"
+    },
+    {
+      "topic_id": "34858",
+      "linked_url": "https://2026.stateofdevs.com/en-US",
+      "displayed_source": "(2026.stateofdevs.com)",
+      "geeknews_posted_at_kst": "2026-10-06T09:45:01+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34858"
+    },
+    {
+      "topic_id": "34815",
+      "linked_url": "https://cedardb.com/blog/sqldoom/",
+      "displayed_source": "(cedardb.com)",
+      "geeknews_posted_at_kst": "2026-10-05T17:38:37+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34815"
+    },
+    {
+      "topic_id": "34861",
+      "linked_url": "https://news.hada.io/topic?id=34861",
+      "displayed_source": "(moamoa.live)",
+      "geeknews_posted_at_kst": "2026-10-06T10:11:10+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        1
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34861"
+    },
+    {
+      "topic_id": "34860",
+      "linked_url": "https://fsdatalab.github.io/blog/introducing-quail/",
+      "displayed_source": "(fsdatalab.github.io)",
+      "geeknews_posted_at_kst": "2026-10-06T10:05:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34860"
+    },
+    {
+      "topic_id": "34859",
+      "linked_url": "https://www.youtube.com/watch?v=J31LlAUtoos",
+      "displayed_source": "(youtube.com)",
+      "geeknews_posted_at_kst": "2026-10-06T09:55:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34859"
+    },
+    {
+      "topic_id": "34854",
+      "linked_url": "https://github.com/mvschwarz/openrig",
+      "displayed_source": "(github.com/mvschwarz)",
+      "geeknews_posted_at_kst": "2026-10-06T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34854"
+    },
+    {
+      "topic_id": "34813",
+      "linked_url": "https://www.youtube.com/watch?v=GLvFTMtw4Jk",
+      "displayed_source": "(youtube.com)",
+      "geeknews_posted_at_kst": "2026-10-05T16:36:16+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34813"
+    },
+    {
+      "topic_id": "34793",
+      "linked_url": "https://x.com/philhchen/status/2072793818945167475",
+      "displayed_source": "(x.com/philhchen)",
+      "geeknews_posted_at_kst": "2026-10-05T10:05:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34793"
+    },
+    {
+      "topic_id": "34864",
+      "linked_url": "https://www.renatovaldes.com/essays/the-head-of-design/",
+      "displayed_source": "(renatovaldes.com)",
+      "geeknews_posted_at_kst": "2026-10-06T10:45:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34864"
+    },
+    {
+      "topic_id": "34839",
+      "linked_url": "https://reflection.ai/blog/introducing-beam",
+      "displayed_source": "(reflection.ai)",
+      "geeknews_posted_at_kst": "2026-10-06T05:40:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34839"
+    },
+    {
+      "topic_id": "34856",
+      "linked_url": "https://www.niemanlab.org/2026/10/chatgpt-is-adding-real-cartoonists-signatures-to-fake-new-yorker-cartoons/",
+      "displayed_source": "(niemanlab.org)",
+      "geeknews_posted_at_kst": "2026-10-06T09:33:25+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34856"
+    },
+    {
+      "topic_id": "34855",
+      "linked_url": "https://news.hada.io/topic?id=34855",
+      "displayed_source": "(chaekgalpi.co.kr)",
+      "geeknews_posted_at_kst": "2026-10-06T09:32:47+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        1
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34855"
+    },
+    {
+      "topic_id": "34851",
+      "linked_url": "https://dbushell.com/2026/10/03/deno-to-node/",
+      "displayed_source": "(dbushell.com)",
+      "geeknews_posted_at_kst": "2026-10-06T09:05:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        1,
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34851"
+    },
+    {
+      "topic_id": "34478",
+      "linked_url": "https://kciter.so/posts/server-monitoring-analysis-guide/",
+      "displayed_source": "(kciter.so)",
+      "geeknews_posted_at_kst": "2026-09-29T15:11:16+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34478"
+    },
+    {
+      "topic_id": "34750",
+      "linked_url": "https://liao.gg/blog/agents-dont-need-memory",
+      "displayed_source": "(liao.gg)",
+      "geeknews_posted_at_kst": "2026-10-04T15:34:13+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34750"
+    },
+    {
+      "topic_id": "34867",
+      "linked_url": "https://news.hada.io/topic?id=34867",
+      "displayed_source": "(play.google.com)",
+      "geeknews_posted_at_kst": "2026-10-06T11:07:52+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        2
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34867"
+    },
+    {
+      "topic_id": "34866",
+      "linked_url": "https://news.hada.io/topic?id=34866",
+      "displayed_source": "(tarotopapp.com)",
+      "geeknews_posted_at_kst": "2026-10-06T11:01:44+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        2
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34866"
+    },
+    {
+      "topic_id": "34713",
+      "linked_url": "https://distantprovince.substack.com/p/the-four-horsemen-of-agentic-coding",
+      "displayed_source": "(substack.com/distantprovince)",
+      "geeknews_posted_at_kst": "2026-10-03T23:03:28+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34713"
+    },
+    {
+      "topic_id": "34749",
+      "linked_url": "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+      "displayed_source": "(blog.cloudflare.com)",
+      "geeknews_posted_at_kst": "2026-10-04T13:43:55+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34749"
+    },
+    {
+      "topic_id": "34753",
+      "linked_url": "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/",
+      "displayed_source": "(nolanlawson.com)",
+      "geeknews_posted_at_kst": "2026-10-04T17:04:48+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34753"
+    },
+    {
+      "topic_id": "34792",
+      "linked_url": "https://claude.com/blog/the-ai-native-sdlc-playbook",
+      "displayed_source": "(claude.com)",
+      "geeknews_posted_at_kst": "2026-10-05T09:55:01+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34792"
+    },
+    {
+      "topic_id": "34720",
+      "linked_url": "https://matduggan.com/what-does-my-dream-os-ui-look-like/",
+      "displayed_source": "(matduggan.com)",
+      "geeknews_posted_at_kst": "2026-10-04T02:13:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34720"
+    },
+    {
+      "topic_id": "34734",
+      "linked_url": "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+      "displayed_source": "(claude.dev)",
+      "geeknews_posted_at_kst": "2026-10-04T07:42:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34734"
+    },
+    {
+      "topic_id": "34846",
+      "linked_url": "https://news.hada.io/topic?id=34846",
+      "displayed_source": "(play.google.com)",
+      "geeknews_posted_at_kst": "2026-10-06T07:08:42+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        2
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34846"
+    },
+    {
+      "topic_id": "34783",
+      "linked_url": "https://offrun.dev/",
+      "displayed_source": "(offrun.dev)",
+      "geeknews_posted_at_kst": "2026-10-05T07:40:19+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34783"
+    },
+    {
+      "topic_id": "34779",
+      "linked_url": "https://github.com/omlahore/RemoveMacAI",
+      "displayed_source": "(github.com/omlahore)",
+      "geeknews_posted_at_kst": "2026-10-05T06:37:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34779"
+    },
+    {
+      "topic_id": "34805",
+      "linked_url": "https://sanspareilsmyn.github.io/blog/why-av-data-is-different/kr/",
+      "displayed_source": "(sanspareilsmyn.github.io)",
+      "geeknews_posted_at_kst": "2026-10-05T13:51:08+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34805"
+    },
+    {
+      "topic_id": "34718",
+      "linked_url": "https://blog.sshh.io/p/the-harness-is-the-company",
+      "displayed_source": "(blog.sshh.io)",
+      "geeknews_posted_at_kst": "2026-10-04T02:07:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34718"
+    },
+    {
+      "topic_id": "34796",
+      "linked_url": "https://claude.dev/blog/getting-started-with-claude-code-mods/",
+      "displayed_source": "(claude.dev)",
+      "geeknews_posted_at_kst": "2026-10-05T11:24:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34796"
+    },
+    {
+      "topic_id": "34770",
+      "linked_url": "https://metedata.substack.com/p/what-meta-got-right-with-muse",
+      "displayed_source": "(substack.com/metedata)",
+      "geeknews_posted_at_kst": "2026-10-05T02:40:24+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34770"
+    },
+    {
+      "topic_id": "34789",
+      "linked_url": "https://sunilpai.dev/posts/the-task-isnt-the-job/",
+      "displayed_source": "(sunilpai.dev)",
+      "geeknews_posted_at_kst": "2026-10-05T09:03:04+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34789"
+    },
+    {
+      "topic_id": "34513",
+      "linked_url": "https://sujithjay.com/inventing-work",
+      "displayed_source": "(sujithjay.com)",
+      "geeknews_posted_at_kst": "2026-09-30T08:41:59+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        2,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34513"
+    },
+    {
+      "topic_id": "34831",
+      "linked_url": "https://news.hada.io/topic?id=34831",
+      "displayed_source": "(github.com/JeongJaeSoon)",
+      "geeknews_posted_at_kst": "2026-10-06T01:48:31+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        2
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34831"
+    },
+    {
+      "topic_id": "34622",
+      "linked_url": "https://turbopuffer.com/blog/rip-vector-database",
+      "displayed_source": "(turbopuffer.com)",
+      "geeknews_posted_at_kst": "2026-10-02T03:52:49+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34622"
+    },
+    {
+      "topic_id": "34466",
+      "linked_url": "https://thinkingsian.com/writers-block-one-principle",
+      "displayed_source": "(thinkingsian.com)",
+      "geeknews_posted_at_kst": "2026-09-29T10:10:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3,
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34466"
+    },
+    {
+      "topic_id": "34647",
+      "linked_url": "https://molily.de/web-dev-education/",
+      "displayed_source": "(molily.de)",
+      "geeknews_posted_at_kst": "2026-10-02T09:38:54+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34647"
+    },
+    {
+      "topic_id": "34439",
+      "linked_url": "https://www.ssp.sh/brain/the-problem-is-not-the-ai-code-but-nobody-knows-anything-anymore/",
+      "displayed_source": "(ssp.sh)",
+      "geeknews_posted_at_kst": "2026-09-29T02:43:43+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34439"
+    },
+    {
+      "topic_id": "34744",
+      "linked_url": "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/",
+      "displayed_source": "(simonwillison.net)",
+      "geeknews_posted_at_kst": "2026-10-04T10:43:56+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34744"
+    },
+    {
+      "topic_id": "34694",
+      "linked_url": "https://github.com/picomq/picomq",
+      "displayed_source": "(github.com/picomq)",
+      "geeknews_posted_at_kst": "2026-10-03T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34694"
+    },
+    {
+      "topic_id": "34761",
+      "linked_url": "https://github.com/Niko1221/Strata",
+      "displayed_source": "(github.com/Niko1221)",
+      "geeknews_posted_at_kst": "2026-10-04T23:44:10+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34761"
+    },
+    {
+      "topic_id": "34552",
+      "linked_url": "https://insufferable.dev/posts/the-ai-race-just-got-awkward/",
+      "displayed_source": "(insufferable.dev)",
+      "geeknews_posted_at_kst": "2026-10-01T02:48:00+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34552"
+    },
+    {
+      "topic_id": "34790",
+      "linked_url": "https://github.com/CopilotKit/OpenMuse",
+      "displayed_source": "(github.com/CopilotKit)",
+      "geeknews_posted_at_kst": "2026-10-05T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34790"
+    },
+    {
+      "topic_id": "34825",
+      "linked_url": "https://news.hada.io/topic?id=34825",
+      "displayed_source": "(studiojin.dev)",
+      "geeknews_posted_at_kst": "2026-10-05T22:03:19+09:00",
+      "kind": "Show",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34825"
+    },
+    {
+      "topic_id": "34729",
+      "linked_url": "https://ftl-os.org/",
+      "displayed_source": "(ftl-os.org)",
+      "geeknews_posted_at_kst": "2026-10-04T06:43:17+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34729"
+    },
+    {
+      "topic_id": "34719",
+      "linked_url": "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/",
+      "displayed_source": "(blog.cloudflare.com)",
+      "geeknews_posted_at_kst": "2026-10-04T02:10:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34719"
+    },
+    {
+      "topic_id": "34641",
+      "linked_url": "https://earendil.com/posts/pi-durable/",
+      "displayed_source": "(earendil.com)",
+      "geeknews_posted_at_kst": "2026-10-02T07:35:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34641"
+    },
+    {
+      "topic_id": "34639",
+      "linked_url": "https://www.elenaverna.com/p/what-its-like-to-work-at-an-ai-native",
+      "displayed_source": "(elenaverna.com)",
+      "geeknews_posted_at_kst": "2026-10-02T07:01:13+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34639"
+    },
+    {
+      "topic_id": "34714",
+      "linked_url": "https://wagtail.org/blog/one-month-on-glm-53-flash/",
+      "displayed_source": "(wagtail.org)",
+      "geeknews_posted_at_kst": "2026-10-03T23:34:43+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34714"
+    },
+    {
+      "topic_id": "34702",
+      "linked_url": "https://gadgets.muse.ai/",
+      "displayed_source": "(gadgets.muse.ai)",
+      "geeknews_posted_at_kst": "2026-10-03T14:33:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34702"
+    },
+    {
+      "topic_id": "34739",
+      "linked_url": "https://github.com/deepakness/cogsend",
+      "displayed_source": "(github.com/deepakness)",
+      "geeknews_posted_at_kst": "2026-10-04T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34739"
+    },
+    {
+      "topic_id": "34738",
+      "linked_url": "https://www.upstage.ai/blog/ko/solar-mini-4",
+      "displayed_source": "(upstage.ai)",
+      "geeknews_posted_at_kst": "2026-10-04T09:15:01+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34738"
+    },
+    {
+      "topic_id": "34679",
+      "linked_url": "https://stillwet.art/",
+      "displayed_source": "(stillwet.art)",
+      "geeknews_posted_at_kst": "2026-10-03T04:45:57+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34679"
+    },
+    {
+      "topic_id": "34645",
+      "linked_url": "https://github.com/Tencent/AI-Infra-Guard",
+      "displayed_source": "(github.com/Tencent)",
+      "geeknews_posted_at_kst": "2026-10-02T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        3,
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34645"
+    },
+    {
+      "topic_id": "34873",
+      "linked_url": "https://danbom425.tistory.com/113",
+      "displayed_source": "(danbom425.tistory.com)",
+      "geeknews_posted_at_kst": "2026-10-06T13:33:32+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34873"
+    },
+    {
+      "topic_id": "34822",
+      "linked_url": "https://claude.com/docs/connectors/building/mcpb?open_in_browser=1",
+      "displayed_source": "(claude.com)",
+      "geeknews_posted_at_kst": "2026-10-05T21:33:48+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34822"
+    },
+    {
+      "topic_id": "34798",
+      "linked_url": "https://pgr21.net/freedom/107393",
+      "displayed_source": "(pgr21.net)",
+      "geeknews_posted_at_kst": "2026-10-05T11:36:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34798"
+    },
+    {
+      "topic_id": "34756",
+      "linked_url": "https://news.hada.io/topic?id=34756",
+      "displayed_source": "",
+      "geeknews_posted_at_kst": "2026-10-04T20:15:26+09:00",
+      "kind": "Ask",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34756"
+    },
+    {
+      "topic_id": "34752",
+      "linked_url": "https://stock-engineer.com/claude-code-skill-pattern-reusable-agent-design/",
+      "displayed_source": "(stock-engineer.com)",
+      "geeknews_posted_at_kst": "2026-10-04T16:06:36+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34752"
+    },
+    {
+      "topic_id": "34711",
+      "linked_url": "https://brunch.co.kr/brunchbook/ai-at-work",
+      "displayed_source": "(brunch.co.kr)",
+      "geeknews_posted_at_kst": "2026-10-03T22:33:20+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34711"
+    },
+    {
+      "topic_id": "34599",
+      "linked_url": "https://decipher99.com/posts/tool-review/%ED%8B%80%EB%A0%B8%EB%8A%94%EB%8D%B0-%ED%99%95%EC%8B%A0%EC%9D%80-09%EC%98%80%EB%8B%A4/",
+      "displayed_source": "(decipher99.com)",
+      "geeknews_posted_at_kst": "2026-10-01T20:33:25+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34599"
+    },
+    {
+      "topic_id": "34598",
+      "linked_url": "https://velog.io/@kimgh06/Three-Slicer-0.3.3-91%EC%B4%88%EB%A5%BC-10%EC%B4%88%EB%A1%9C-%EC%A4%84%EC%9D%B4%EB%A9%B4%EC%84%9C-%EC%B0%BE%EC%9D%80-%EA%B2%83%EB%93%A4",
+      "displayed_source": "(velog.io/@kimgh06)",
+      "geeknews_posted_at_kst": "2026-10-01T19:43:55+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34598"
+    },
+    {
+      "topic_id": "34597",
+      "linked_url": "https://visualeaf.com/blog/postgresql-jsonb-query-update-index/",
+      "displayed_source": "(visualeaf.com)",
+      "geeknews_posted_at_kst": "2026-10-01T18:55:28+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34597"
+    },
+    {
+      "topic_id": "34589",
+      "linked_url": "https://fosscomics.com/ko/posts/11.%20BSD%20Unix%20Part%201%20-%20Unix%20Code%20Goes%20to%20UC%20Berkeley/",
+      "displayed_source": "(fosscomics.com)",
+      "geeknews_posted_at_kst": "2026-10-01T15:19:57+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34589"
+    },
+    {
+      "topic_id": "34588",
+      "linked_url": "https://blog.google/intl/ko-kr/products/gemini-4-argon-kr/",
+      "displayed_source": "(blog.google)",
+      "geeknews_posted_at_kst": "2026-10-01T15:14:56+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34588"
+    },
+    {
+      "topic_id": "34582",
+      "linked_url": "https://liner.com/ko/blog/liner-pencil-design-harness",
+      "displayed_source": "(liner.com)",
+      "geeknews_posted_at_kst": "2026-10-01T12:37:12+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34582"
+    },
+    {
+      "topic_id": "34581",
+      "linked_url": "https://substack.com/home/post/p-216691876",
+      "displayed_source": "(substack.com)",
+      "geeknews_posted_at_kst": "2026-10-01T11:17:11+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34581"
+    },
+    {
+      "topic_id": "34575",
+      "linked_url": "https://github.com/traycerai/traycer",
+      "displayed_source": "(github.com/traycerai)",
+      "geeknews_posted_at_kst": "2026-10-01T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        4
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34575"
+    },
+    {
+      "topic_id": "34572",
+      "linked_url": "https://blog.wonkooklee.com/docs/api-and-interfaces/browser-realtime/",
+      "displayed_source": "(blog.wonkooklee.com)",
+      "geeknews_posted_at_kst": "2026-10-01T08:49:59+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34572"
+    },
+    {
+      "topic_id": "34528",
+      "linked_url": "https://thenewstack.io/openai-decision-api-luna",
+      "displayed_source": "(thenewstack.io)",
+      "geeknews_posted_at_kst": "2026-09-30T12:27:13+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34528"
+    },
+    {
+      "topic_id": "34517",
+      "linked_url": "https://github.com/jeffhajewski/latticedb",
+      "displayed_source": "(github.com/jeffhajewski)",
+      "geeknews_posted_at_kst": "2026-09-30T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34517"
+    },
+    {
+      "topic_id": "34500",
+      "linked_url": "https://openai.com/ko-KR/index/introducing-gpt-6-1-sol/",
+      "displayed_source": "(openai.com)",
+      "geeknews_posted_at_kst": "2026-09-30T02:37:48+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34500"
+    },
+    {
+      "topic_id": "34483",
+      "linked_url": "https://alfadur7.github.io/llm-wiki-newsroom/ko/scooping-stones/",
+      "displayed_source": "(alfadur7.github.io)",
+      "geeknews_posted_at_kst": "2026-09-29T18:01:08+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34483"
+    },
+    {
+      "topic_id": "34474",
+      "linked_url": "https://github.com/tscmoo/pluto",
+      "displayed_source": "(github.com/tscmoo)",
+      "geeknews_posted_at_kst": "2026-09-29T13:44:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34474"
+    },
+    {
+      "topic_id": "34472",
+      "linked_url": "https://lambdadb.ai/blog/introducing-data-versioning",
+      "displayed_source": "(lambdadb.ai)",
+      "geeknews_posted_at_kst": "2026-09-29T13:15:18+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34472"
+    },
+    {
+      "topic_id": "34469",
+      "linked_url": "https://cron.withuse.io/cron-every-5-minutes/",
+      "displayed_source": "(cron.withuse.io)",
+      "geeknews_posted_at_kst": "2026-09-29T11:42:34+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34469"
+    },
+    {
+      "topic_id": "34463",
+      "linked_url": "https://github.com/nobodywho-ooo/nobodywho",
+      "displayed_source": "(github.com/nobodywho-ooo)",
+      "geeknews_posted_at_kst": "2026-09-29T09:30:02+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34463"
+    },
+    {
+      "topic_id": "34450",
+      "linked_url": "https://fosscomics.com/ko/posts/10.%20The%20Life%20of%20Dennis%20Ritchie/",
+      "displayed_source": "(fosscomics.com)",
+      "geeknews_posted_at_kst": "2026-09-29T04:56:24+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        5
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34450"
+    },
+    {
+      "topic_id": "34882",
+      "linked_url": "https://herecomesthemoon.net/2026/10/async-rust-where-does-the-scheduler-live/",
+      "displayed_source": "(herecomesthemoon.net)",
+      "geeknews_posted_at_kst": "2026-10-06T17:04:32+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34882"
+    },
+    {
+      "topic_id": "34881",
+      "linked_url": "https://github.com/eolix/photosuite/issues/77",
+      "displayed_source": "(github.com/eolix)",
+      "geeknews_posted_at_kst": "2026-10-06T16:31:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34881"
+    },
+    {
+      "topic_id": "34879",
+      "linked_url": "https://www.iroh.computer/blog/iroh-global-content-discovery",
+      "displayed_source": "(iroh.computer)",
+      "geeknews_posted_at_kst": "2026-10-06T16:04:07+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34879"
+    },
+    {
+      "topic_id": "34876",
+      "linked_url": "https://www.vivienhenz.com/common-lisp",
+      "displayed_source": "(vivienhenz.com)",
+      "geeknews_posted_at_kst": "2026-10-06T15:38:20+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34876"
+    },
+    {
+      "topic_id": "34875",
+      "linked_url": "https://www.thedrive.com/news/high-diesel-prices-bankrupted-16-trucking-companies-in-just-30-days",
+      "displayed_source": "(thedrive.com)",
+      "geeknews_posted_at_kst": "2026-10-06T15:35:20+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34875"
+    },
+    {
+      "topic_id": "34874",
+      "linked_url": "https://gleam.run/news/gleam-doesnt-compile-to-erlang-source-anymore/",
+      "displayed_source": "(gleam.run)",
+      "geeknews_posted_at_kst": "2026-10-06T15:02:23+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34874"
+    },
+    {
+      "topic_id": "34872",
+      "linked_url": "https://www.debugbear.com/blog/example-dot-com-redesign-history",
+      "displayed_source": "(debugbear.com)",
+      "geeknews_posted_at_kst": "2026-10-06T13:08:16+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34872"
+    },
+    {
+      "topic_id": "34843",
+      "linked_url": "https://deadparrotbbs.com/why-plain-text-is-still-one-of-the-best-technologies-we-have/",
+      "displayed_source": "(deadparrotbbs.com)",
+      "geeknews_posted_at_kst": "2026-10-06T06:37:08+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        6
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34843"
+    },
+    {
+      "topic_id": "34870",
+      "linked_url": "https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/",
+      "displayed_source": "(terrytao.wordpress.com)",
+      "geeknews_posted_at_kst": "2026-10-06T11:46:40+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34870"
+    },
+    {
+      "topic_id": "34869",
+      "linked_url": "https://arstechnica.com/tech-policy/2026/10/texas-city-demands-2m-for-public-records-on-flock-usage/",
+      "displayed_source": "(arstechnica.com)",
+      "geeknews_posted_at_kst": "2026-10-06T11:43:40+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34869"
+    },
+    {
+      "topic_id": "34868",
+      "linked_url": "https://qlabs.sh/research/dust",
+      "displayed_source": "(qlabs.sh)",
+      "geeknews_posted_at_kst": "2026-10-06T11:40:40+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34868"
+    },
+    {
+      "topic_id": "34836",
+      "linked_url": "https://onlys.ky/independence-is-interdependence/",
+      "displayed_source": "(onlys.ky)",
+      "geeknews_posted_at_kst": "2026-10-06T04:45:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34836"
+    },
+    {
+      "topic_id": "34862",
+      "linked_url": "https://flattensf.com/",
+      "displayed_source": "(flattensf.com)",
+      "geeknews_posted_at_kst": "2026-10-06T10:31:38+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34862"
+    },
+    {
+      "topic_id": "34853",
+      "linked_url": "https://ohhfishal.net/Posts/claude",
+      "displayed_source": "(ohhfishal.net)",
+      "geeknews_posted_at_kst": "2026-10-06T09:11:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34853"
+    },
+    {
+      "topic_id": "34852",
+      "linked_url": "https://blog.buenzli.dev/flirt-is-open-source/",
+      "displayed_source": "(blog.buenzli.dev)",
+      "geeknews_posted_at_kst": "2026-10-06T09:08:45+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34852"
+    },
+    {
+      "topic_id": "34830",
+      "linked_url": "https://worksinprogress.co/issue/mosquitoes-are-a-choice/",
+      "displayed_source": "(worksinprogress.co)",
+      "geeknews_posted_at_kst": "2026-10-06T01:36:57+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34830"
+    },
+    {
+      "topic_id": "34850",
+      "linked_url": "https://arslan.io/2026/10/05/the-lamps-in-my-house/",
+      "displayed_source": "(arslan.io)",
+      "geeknews_posted_at_kst": "2026-10-06T08:32:58+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34850"
+    },
+    {
+      "topic_id": "34849",
+      "linked_url": "https://www.barrons.com/news/norway-eyes-partial-ban-of-smart-glasses-e65dc239",
+      "displayed_source": "(barrons.com)",
+      "geeknews_posted_at_kst": "2026-10-06T07:42:17+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34849"
+    },
+    {
+      "topic_id": "34848",
+      "linked_url": "https://www.nobelprize.org/prizes/medicine/2026/summary/",
+      "displayed_source": "(nobelprize.org)",
+      "geeknews_posted_at_kst": "2026-10-06T07:39:17+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34848"
+    },
+    {
+      "topic_id": "34847",
+      "linked_url": "https://www.vals.ai/blogs/room-temperature-magnetic-semiconductors",
+      "displayed_source": "(vals.ai)",
+      "geeknews_posted_at_kst": "2026-10-06T07:36:17+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34847"
+    },
+    {
+      "topic_id": "34827",
+      "linked_url": "https://stratechery.com/2026/apple-and-a-hackers-future/",
+      "displayed_source": "(stratechery.com)",
+      "geeknews_posted_at_kst": "2026-10-05T22:40:41+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34827"
+    },
+    {
+      "topic_id": "34845",
+      "linked_url": "https://news.ycombinator.com/item?id=49964045",
+      "displayed_source": "(news.ycombinator.com)",
+      "geeknews_posted_at_kst": "2026-10-06T06:43:08+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34845"
+    },
+    {
+      "topic_id": "34844",
+      "linked_url": "https://blog.jim-nielsen.com/2026/embarrassed-by-tech/",
+      "displayed_source": "(blog.jim-nielsen.com)",
+      "geeknews_posted_at_kst": "2026-10-06T06:40:08+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        7,
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34844"
+    },
+    {
+      "topic_id": "34842",
+      "linked_url": "https://jacobg.co/emails-at-jacobg-co/",
+      "displayed_source": "(jacobg.co)",
+      "geeknews_posted_at_kst": "2026-10-06T05:49:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34842"
+    },
+    {
+      "topic_id": "34841",
+      "linked_url": "https://onlinelibrary.wiley.com/doi/10.1002/eng2.70108",
+      "displayed_source": "(onlinelibrary.wiley.com)",
+      "geeknews_posted_at_kst": "2026-10-06T05:46:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34841"
+    },
+    {
+      "topic_id": "34840",
+      "linked_url": "https://dosdays.co.uk/topics/Software/borland_turbo_basic.php",
+      "displayed_source": "(dosdays.co.uk)",
+      "geeknews_posted_at_kst": "2026-10-06T05:43:52+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34840"
+    },
+    {
+      "topic_id": "34838",
+      "linked_url": "https://blog.metabrainz.org/2026/10/04/picard-3-0-released/",
+      "displayed_source": "(blog.metabrainz.org)",
+      "geeknews_posted_at_kst": "2026-10-06T04:51:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34838"
+    },
+    {
+      "topic_id": "34837",
+      "linked_url": "https://floreal.tech/blog/2026/making-a-gtk-app-in-haskell-part-1/",
+      "displayed_source": "(floreal.tech)",
+      "geeknews_posted_at_kst": "2026-10-06T04:48:47+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34837"
+    },
+    {
+      "topic_id": "34834",
+      "linked_url": "https://www.theguardian.com/world/2026/oct/05/russia-lab-worker-possibly-dies-of-plague-siberia-quarantine-measures-irkutsk",
+      "displayed_source": "(theguardian.com)",
+      "geeknews_posted_at_kst": "2026-10-06T03:32:36+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34834"
+    },
+    {
+      "topic_id": "34832",
+      "linked_url": "https://github.com/rui314/mold/releases/tag/v3.0.0",
+      "displayed_source": "(github.com/rui314)",
+      "geeknews_posted_at_kst": "2026-10-06T02:36:13+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34832"
+    },
+    {
+      "topic_id": "34809",
+      "linked_url": "https://getartcraft.com/apps",
+      "displayed_source": "(getartcraft.com)",
+      "geeknews_posted_at_kst": "2026-10-05T15:37:03+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34809"
+    },
+    {
+      "topic_id": "34829",
+      "linked_url": "https://www.nobelprize.org/prizes/medicine/2026/press-release/",
+      "displayed_source": "(nobelprize.org)",
+      "geeknews_posted_at_kst": "2026-10-06T00:38:43+09:00",
+      "kind": "뉴스",
+      "observed_page_ids": [
+        8
+      ],
+      "geeknews_topic_url": "https://news.hada.io/topic?id=34829"
+    }
+  ],
+  "feedChecks": [
+    {
+      "siteUrl": "https://kciter.so/",
+      "checkedAt": "2026-10-06T08:11:54.832Z",
+      "feeds": [
+        {
+          "url": "https://kciter.so/feed.xml",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://kciter.so/feed.xml",
+          "bytes": 35192,
+          "items": 58,
+          "sample": [
+            {
+              "publishedAt": "Mon, 20 Jul 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Sun, 12 Jul 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 03 Apr 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://kciter.so/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://kciter.so/feed.xml",
+        "observedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "matchedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "latestFeedDate": "2026-07-20T00:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://nolanlawson.com/",
+      "checkedAt": "2026-10-06T08:11:54.865Z",
+      "feeds": [
+        {
+          "url": "https://nolanlawson.com/feed/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://nolanlawson.com/feed/",
+          "bytes": 97842,
+          "items": 10,
+          "sample": [
+            {
+              "publishedAt": "Sat, 03 Oct 2026 20:49:29 +0000",
+              "encodedBodyChars": 13069,
+              "contentChars": 300,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Thu, 01 Oct 2026 00:35:17 +0000",
+              "encodedBodyChars": 11195,
+              "contentChars": 300,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 31 Aug 2026 13:14:54 +0000",
+              "encodedBodyChars": 8542,
+              "contentChars": 300,
+              "summaryChars": 0
+            }
+          ]
+        },
+        {
+          "url": "https://nolanlawson.com/feed/atom/",
+          "declaredType": "application/atom+xml",
+          "status": 200,
+          "finalUrl": "https://nolanlawson.com/feed/atom/",
+          "bytes": 98601,
+          "items": 10,
+          "sample": [
+            {
+              "publishedAt": "2026-10-03T20:49:29.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 13069,
+              "summaryChars": 300
+            },
+            {
+              "publishedAt": "2026-10-01T00:35:17.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 11195,
+              "summaryChars": 300
+            },
+            {
+              "publishedAt": "2026-08-31T13:14:54.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 8542,
+              "summaryChars": 300
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://nolanlawson.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://nolanlawson.com/feed/",
+        "observedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "matchedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "latestFeedDate": "2026-10-03T20:49:29.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://matduggan.com/",
+      "checkedAt": "2026-10-06T08:11:54.866Z",
+      "feeds": [
+        {
+          "url": "https://matduggan.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://matduggan.com/rss/",
+          "bytes": 281456,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Fri, 02 Oct 2026 10:30:51 GMT",
+              "encodedBodyChars": 37252,
+              "contentChars": 346,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 25 Sep 2026 12:00:44 GMT",
+              "encodedBodyChars": 15044,
+              "contentChars": 276,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 12:00:18 GMT",
+              "encodedBodyChars": 11343,
+              "contentChars": 822,
+              "summaryChars": 0
+            }
+          ]
+        },
+        {
+          "url": "https://matduggan.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://matduggan.com/rss/",
+          "bytes": 281456,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Fri, 02 Oct 2026 10:30:51 GMT",
+              "encodedBodyChars": 37252,
+              "contentChars": 346,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 25 Sep 2026 12:00:44 GMT",
+              "encodedBodyChars": 15044,
+              "contentChars": 276,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 12:00:18 GMT",
+              "encodedBodyChars": 11343,
+              "contentChars": 822,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://matduggan.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://matduggan.com/rss/",
+        "observedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "matchedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "latestFeedDate": "2026-10-02T10:30:51.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://arslan.io/",
+      "checkedAt": "2026-10-06T08:11:58.236Z",
+      "feeds": [
+        {
+          "url": "https://arslan.io/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://arslan.io/rss/",
+          "bytes": 396493,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 14:00:54 GMT",
+              "encodedBodyChars": 48102,
+              "contentChars": 500,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 16:18:06 GMT",
+              "encodedBodyChars": 23860,
+              "contentChars": 1107,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 10 Aug 2026 18:04:27 GMT",
+              "encodedBodyChars": 11550,
+              "contentChars": 145,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://arslan.io/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://arslan.io/rss/",
+        "observedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "matchedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "latestFeedDate": "2026-10-05T14:00:54.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://thenewstack.io/",
+      "checkedAt": "2026-10-06T08:11:58.237Z",
+      "feeds": [
+        {
+          "url": "https://thenewstack.io/blog/feed/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://thenewstack.io/blog/feed/",
+          "bytes": 330881,
+          "items": 26,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 21:55:12 +0000",
+              "encodedBodyChars": 7056,
+              "contentChars": 871,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 21:49:57 +0000",
+              "encodedBodyChars": 10087,
+              "contentChars": 808,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 19:29:15 +0000",
+              "encodedBodyChars": 11517,
+              "contentChars": 933,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://thenewstack.io/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://thenewstack.io/blog/feed/",
+        "observedOriginalUrls": [
+          "https://thenewstack.io/openai-decision-api-luna"
+        ],
+        "matchedOriginalUrls": [],
+        "latestFeedDate": "2026-10-05T21:55:12.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://simonwillison.net/",
+      "checkedAt": "2026-10-06T08:11:58.235Z",
+      "feeds": [
+        {
+          "url": "https://simonwillison.net/atom/everything/",
+          "declaredType": "application/atom+xml",
+          "status": 200,
+          "finalUrl": "https://simonwillison.net/atom/everything/",
+          "bytes": 164494,
+          "items": 30,
+          "sample": [
+            {
+              "publishedAt": "2026-10-05T23:56:47.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 1804
+            },
+            {
+              "publishedAt": "2026-10-04T23:34:00.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 6120
+            },
+            {
+              "publishedAt": "2026-10-03T23:34:02.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 3707
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://simonwillison.net/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://simonwillison.net/atom/everything/",
+        "observedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "matchedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "latestFeedDate": "2026-10-05T23:56:47.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://openai.com/news/",
+      "checkedAt": "2026-10-06T08:11:59.616Z",
+      "feeds": [],
+      "status": 403,
+      "finalUrl": "https://openai.com/news/"
+    },
+    {
+      "siteUrl": "https://blog.cloudflare.com/",
+      "checkedAt": "2026-10-06T08:11:59.615Z",
+      "feeds": [
+        {
+          "url": "https://blog.cloudflare.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://blog.cloudflare.com/rss/",
+          "bytes": 281433,
+          "items": 20,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 13:00:00 GMT",
+              "encodedBodyChars": 19873,
+              "contentChars": 194,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 13:00:00 GMT",
+              "encodedBodyChars": 8974,
+              "contentChars": 281,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 02 Oct 2026 18:00:00 GMT",
+              "encodedBodyChars": 17187,
+              "contentChars": 206,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://blog.cloudflare.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://blog.cloudflare.com/rss/",
+        "observedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "matchedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "latestFeedDate": "2026-10-05T13:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://www.techspot.com/",
+      "checkedAt": "2026-10-06T08:11:59.614Z",
+      "feeds": [],
+      "status": 403,
+      "finalUrl": "https://www.techspot.com/"
+    },
+    {
+      "siteUrl": "https://www.upstage.ai/",
+      "checkedAt": "2026-10-06T08:11:59.844Z",
+      "feeds": [],
+      "status": 200,
+      "finalUrl": "https://www.upstage.ai/"
+    },
+    {
+      "siteUrl": "https://reflection.ai/",
+      "checkedAt": "2026-10-06T08:11:59.841Z",
+      "feeds": [],
+      "status": 200,
+      "finalUrl": "https://reflection.ai/"
+    },
+    {
+      "siteUrl": "https://threedots.tech/",
+      "checkedAt": "2026-10-06T08:11:59.843Z",
+      "feeds": [
+        {
+          "url": "https://threedots.tech/index.xml",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://threedots.tech/index.xml",
+          "bytes": 4154412,
+          "items": 69,
+          "sample": [
+            {
+              "publishedAt": "Thu, 20 Aug 2026 00:00:00 +0200",
+              "encodedBodyChars": 0,
+              "contentChars": 22479,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Thu, 06 Aug 2026 00:00:00 +0200",
+              "encodedBodyChars": 0,
+              "contentChars": 11567,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Wed, 28 Jan 2026 16:00:00 +0000",
+              "encodedBodyChars": 0,
+              "contentChars": 46227,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://threedots.tech/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://threedots.tech/index.xml",
+        "observedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "matchedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "latestFeedDate": "2026-08-19T22:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://2026.stateofdevs.com/en-US",
+      "checkedAt": "2026-10-07T09:23:05.788Z",
+      "status": 200,
+      "finalUrl": "https://2026.stateofdevs.com/en-US",
+      "feeds": [],
+      "feedDiscovery": "개요·About·Devographics 홈페이지의 RSS·Atom alternate 및 feed 링크 확인. 공개 링크 미발견이며 피드 부재는 미확정",
+      "verifiedPages": [
+        {
+          "url": "https://2026.stateofdevs.com/en-US",
+          "status": 200
+        },
+        {
+          "url": "https://2026.stateofdevs.com/en-US/about",
+          "status": 200
+        },
+        {
+          "url": "https://devographics.com/",
+          "status": 200
+        }
+      ],
+      "sourceReview": {
+        "publisher": "Devographics",
+        "contentType": "annual_survey_report",
+        "collectionPriority": "사용자 지정 수집 후보",
+        "suggestedCategory": "developer",
+        "collectionMode": "연도별 보고서 URL을 등록하고 변경 여부 확인. 같은 연도·언어는 중복 등록하지 않음",
+        "surveyPeriod": {
+          "start": "2026-07-05",
+          "end": "2026-09-05"
+        },
+        "respondents": 5463,
+        "topics": [
+          "경력",
+          "직장",
+          "AI",
+          "건강",
+          "세계관",
+          "취미"
+        ],
+        "publicationDate": null,
+        "publicationDateStatus": "공식 소개 페이지의 발행일과 조사 기간 불일치, 미확정",
+        "publicationDateEvidence": {
+          "url": "https://2026.stateofdevs.com/en-US/about",
+          "displayedResultPublicationDate": "2025-09-25",
+          "note": "조사 종료일보다 앞선 날짜. 원문 발행일로 채택하거나 임의로 연도를 수정하지 않음"
+        },
+        "bodyStatus": "개요·소개 텍스트 확인. 주제별 전체 본문·도표 추출과 저장·번역은 미검증",
+        "displayProposal": "개발 분야 목록에 연례 보고서 표시. 한국어 제목·짧은 요약·조사 기간·응답자 수·원문 링크 제공. 상세에는 항목별 응답 수와 원문 도표 링크 표시",
+        "surveyLimitation": "자발적 참여 표본으로 전체 개발자를 대표한다고 단정할 수 없음"
+      }
+    }
+  ]
+}

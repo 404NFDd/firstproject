@@ -18,7 +18,7 @@ pnpm-debug.log*
 *.log
 .eslintcache
 .stylelintcache
-.tsbuildinfo
+*.tsbuildinfo
 
 # Environment variables
 .env

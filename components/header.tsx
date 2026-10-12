@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Menu, X, Search, LogOut, Sun, Moon, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "@/components/theme-provider"
+import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,21 +20,27 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export function Header() {
+  const router = useRouter()
+  const { toast } = useToast()
   const [menuOpen, setMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [emailSubscribed, setEmailSubscribed] = useState(false)
+  const [emailSubscribed, setEmailSubscribed] = useState<boolean | null>(null)
+  const [subscriptionError, setSubscriptionError] = useState(false)
+  const [subscriptionReload, setSubscriptionReload] = useState(0)
   const [togglingEmail, setTogglingEmail] = useState(false)
   const [showSubscribeDialog, setShowSubscribeDialog] = useState(false)
+  const requestController = useRef<AbortController | null>(null)
+  const subscriptionVersion = useRef(0)
+  const togglingEmailRef = useRef(false)
+  const loggingOutRef = useRef(false)
   const { data: session, status } = useSession()
   const { theme, resolvedTheme, toggleTheme } = useTheme()
 
   useEffect(() => {
     let cancelled = false
     const rafId = window.requestAnimationFrame(() => {
-      if (!cancelled) {
-        setMounted(true)
-      }
+      if (!cancelled) setMounted(true)
     })
     return () => {
       cancelled = true
@@ -40,60 +48,87 @@ export function Header() {
     }
   }, [])
 
-  // 메일 구독 상태 조회
   useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/email/subscribe")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.emailSubscription !== undefined) {
-            setEmailSubscribed(data.emailSubscription)
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching email subscription:", error)
-        })
+    if (status !== "authenticated") return
+    const controller = new AbortController()
+    requestController.current = controller
+    const version = ++subscriptionVersion.current
+    const fetchSubscription = async () => {
+      setEmailSubscribed(null)
+      setSubscriptionError(false)
+      try {
+        const response = await fetch("/api/email/subscribe", { signal: controller.signal })
+        const data = await response.json()
+        if (controller.signal.aborted || version !== subscriptionVersion.current) return
+        if (response.status === 401) router.replace("/auth/login")
+        if (!response.ok || typeof data.emailSubscription !== "boolean") {
+          throw new Error(data.error || "구독 상태를 확인하지 못했습니다.")
+        }
+        setEmailSubscribed(data.emailSubscription)
+      } catch (error) {
+        if (controller.signal.aborted || version !== subscriptionVersion.current) return
+        setSubscriptionError(true)
+        toast({ title: "구독 상태 조회 실패", description: error instanceof Error ? error.message : "메일 버튼으로 다시 시도해 주세요.", variant: "destructive" })
+      }
     }
-  }, [status])
+    void fetchSubscription()
+    return () => {
+      controller.abort()
+      if (requestController.current === controller) requestController.current = null
+    }
+  }, [status, session?.user?.id, subscriptionReload, router, toast])
 
-  // 메일 버튼 클릭 처리
-  // Input: 현재 emailSubscribed 상태
-  // Output: 구독 중이면 /profile 이동, 아니면 구독 다이얼로그 오픈
+  useEffect(() => {
+    const onSubscriptionChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: unknown; subscribed?: unknown }>).detail
+      if (status !== "authenticated" || !detail || detail.userId !== session?.user?.id || typeof detail.subscribed !== "boolean") return
+      subscriptionVersion.current++
+      setEmailSubscribed(detail.subscribed)
+      setSubscriptionError(false)
+    }
+    window.addEventListener("email-subscription-changed", onSubscriptionChange)
+    return () => window.removeEventListener("email-subscription-changed", onSubscriptionChange)
+  }, [status, session?.user?.id])
+
   const handleEmailButtonClick = () => {
-    if (emailSubscribed) {
-      // 이미 구독 중이면 프로필 페이지로 이동
-      window.location.href = "/profile"
+    setMenuOpen(false)
+    if (emailSubscribed === null) {
+      setSubscriptionReload((value) => value + 1)
+    } else if (emailSubscribed) {
+      router.push("/profile")
     } else {
-      // 구독 안 되어 있으면 팝업 표시
-      // 다이얼로그가 열릴 때도 호버 상태 유지
       setShowSubscribeDialog(true)
     }
   }
 
-  // 이메일 브리핑 구독 토글
-  // Input: subscribe(true=구독, false=해제)
-  // Output: 서버 반영 후 emailSubscribed 갱신
   const handleToggleEmailSubscription = async (subscribe: boolean) => {
-    if (togglingEmail || status !== "authenticated") return
+    if (togglingEmailRef.current || status !== "authenticated" || !session?.user?.id) return
+    togglingEmailRef.current = true
     setTogglingEmail(true)
+    const signal = requestController.current?.signal
     try {
       const response = await fetch("/api/email/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscribe }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscribe }), signal,
       })
       const data = await response.json()
-      if (data.success) {
-        setEmailSubscribed(data.emailSubscription === 1)
-        setShowSubscribeDialog(false)
+      if (signal?.aborted) return
+      if (response.status === 401) router.replace("/auth/login")
+      if (!response.ok || !data.success || ![0, 1].includes(data.emailSubscription)) {
+        throw new Error(data.error || "구독 설정을 변경하지 못했습니다.")
       }
+      setEmailSubscribed(data.emailSubscription === 1)
+      setShowSubscribeDialog(false)
+      window.dispatchEvent(new CustomEvent("email-subscription-changed", {
+        detail: { userId: session.user.id, subscribed: data.emailSubscription === 1 },
+      }))
+      toast({ title: data.message || "구독 설정을 변경했습니다" })
     } catch (error) {
-      console.error("Error toggling email subscription:", error)
+      if (!signal?.aborted) toast({ title: "구독 변경 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
     } finally {
+      togglingEmailRef.current = false
       setTogglingEmail(false)
     }
   }
-
   const activeTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : undefined
   const isDarkMode = activeTheme ? activeTheme !== "light" : undefined
   const toggleLabel = mounted ? `${isDarkMode ? "라이트" : "다크"} 모드로 전환` : "테마 모드 전환"
@@ -107,29 +142,44 @@ export function Header() {
     <span className="block w-5 h-5" aria-hidden="true" />
   )
 
-  // 로그아웃 후 로그인 페이지 이동 유틸
-  // Input: 없음
-  // Output: signOut callbackUrl로 이동
-  const redirectToLogin = async () => {
-    try {
-      await signOut({ callbackUrl: "/auth/login" })
-    } catch (error) {
-      console.error("Error while redirecting to login:", error)
-    }
-  }
-
-  // 로그아웃 처리
-  // Input: 없음
-  // Output: 서버 로그아웃 API 호출 후 로그인 페이지 이동
   const handleLogout = async () => {
-    if (loggingOut) return
+    if (loggingOutRef.current) return
+    loggingOutRef.current = true
     setLoggingOut(true)
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
+      const response = await fetch("/api/auth/logout", { method: "POST" })
+      const cleanupFailed = response.status === 500
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        if (!cleanupFailed) throw new Error(data?.error || "로그아웃에 실패했습니다.")
+        // 서버는 DB 정리에 실패해도 인증 쿠키를 지웁니다.
+        toast({
+          title: "로그아웃 처리 알림",
+          description: "로그인 정보는 지웠지만 서버의 토큰 정리에 실패했습니다.",
+          variant: "destructive",
+        })
+      }
+      try {
+        await signOut({ redirect: false })
+      } catch (error) {
+        console.error("로그아웃 화면 갱신 실패:", error)
+        const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" })
+        const serverSession: unknown = await sessionResponse.json().catch(() => null)
+        if (!sessionResponse.ok || !serverSession || typeof serverSession !== "object" ||
+          Array.isArray(serverSession) || Object.keys(serverSession).length !== 0) {
+          throw new Error("로그아웃 상태를 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+        // 현재 탭의 SessionProvider 캐시도 새 페이지에서 초기화합니다.
+        window.location.assign(new URL("/auth/login", window.location.origin).href)
+        return
+      }
+      if (!cleanupFailed) toast({ title: "로그아웃되었습니다" })
+      router.replace("/auth/login")
+      router.refresh()
     } catch (error) {
-      console.error("Error logging out:", error)
+      toast({ title: "로그아웃 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
     } finally {
-      await redirectToLogin()
+      loggingOutRef.current = false
       setLoggingOut(false)
     }
   }
@@ -158,6 +208,7 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
+          {session?.user?.isAdmin && <Link href="/admin" className="text-sm text-primary hover:underline">관리자</Link>}
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
             대시보드
           </Link>
@@ -168,16 +219,16 @@ export function Header() {
             <>
               <button
                 onClick={handleEmailButtonClick}
-                disabled={togglingEmail}
+                disabled={togglingEmail || (emailSubscribed === null && !subscriptionError)}
                 className={`text-sm transition-all duration-200 flex flex-col items-center gap-0.5 ${emailSubscribed
                     ? "text-primary hover:text-accent"
                     : "text-muted-foreground hover:text-foreground"
                   } disabled:opacity-60 disabled:cursor-not-allowed`}
-                title={emailSubscribed ? "메일 구독 해제" : "메일 구독"}
+                title={subscriptionError ? "구독 상태 다시 확인" : emailSubscribed ? "메일 구독 관리" : "메일 구독"}
               >
                 <div className="flex items-center gap-1">
                   <Mail className="w-4 h-4" />
-                  <span className="hidden lg:inline">메일</span>
+                  <span className="hidden lg:inline">{subscriptionError ? "메일 상태 재확인" : "메일"}</span>
                 </div>
                 {emailSubscribed && (
                   <span className="text-[10px] text-muted-foreground leading-none">구독중</span>
@@ -188,14 +239,14 @@ export function Header() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>메일 구독</AlertDialogTitle>
                     <AlertDialogDescription>
-                      매일 아침 8시에 주요 뉴스를 요약해서 이메일로 받아보시겠습니까?
+                      지난 24시간의 종합 뉴스 브리핑을 계정 이메일로 받습니다. 자동 발송이 설정된 환경에서는 한국 시각 오전 7시에 보냅니다.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>취소</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleToggleEmailSubscription(true)}
-                      disabled={togglingEmail}
+                      disabled={togglingEmail || (emailSubscribed === null && !subscriptionError)}
                     >
                       구독하기
                     </AlertDialogAction>
@@ -271,6 +322,7 @@ export function Header() {
       {menuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <nav className="flex flex-col gap-4 p-4">
+            {session?.user?.isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)} className="text-sm text-primary hover:underline">관리자</Link>}
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
               대시보드
             </Link>
@@ -280,7 +332,7 @@ export function Header() {
             {status === "authenticated" && (
               <button
                 onClick={handleEmailButtonClick}
-                disabled={togglingEmail}
+                disabled={togglingEmail || (emailSubscribed === null && !subscriptionError)}
                 className={`text-sm transition-all duration-200 flex flex-col items-center gap-0.5 ${emailSubscribed
                     ? "text-primary hover:text-accent"
                     : "text-muted-foreground hover:text-foreground"
@@ -288,7 +340,7 @@ export function Header() {
               >
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  <span>메일</span>
+                  <span>{subscriptionError ? "메일 상태 재확인" : "메일"}</span>
                 </div>
                 {emailSubscribed && (
                   <span className="text-[10px] text-muted-foreground leading-none">구독중</span>

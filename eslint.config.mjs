@@ -1,7 +1,9 @@
-import next from "eslint-config-next"
+import nextVitals from "eslint-config-next/core-web-vitals"
+import nextTypescript from "eslint-config-next/typescript"
 
 const config = [
-    ...next,
+    ...nextVitals,
+    ...nextTypescript,
     {
         rules: {},
     },

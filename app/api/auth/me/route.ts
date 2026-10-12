@@ -1,12 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifyAccessToken } from "@/lib/auth"
+import { getRequestUser } from "@/lib/request-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get("accessToken")?.value
-
-    const payload = await verifyAccessToken(accessToken || "")
+    const payload = await getRequestUser(request)
 
     if (!payload) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })

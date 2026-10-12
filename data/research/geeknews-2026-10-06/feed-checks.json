@@ -1,0 +1,509 @@
+{
+  "note": "출처 홈페이지에 공개된 RSS·Atom 링크만 확인했습니다. 링크가 없거나 접근이 실패하면 피드 없음으로 단정하지 않습니다. 본문 필드 길이는 전체 본문 확보를 보증하지 않습니다.",
+  "reports": [
+    {
+      "siteUrl": "https://kciter.so/",
+      "checkedAt": "2026-10-06T08:11:54.832Z",
+      "feeds": [
+        {
+          "url": "https://kciter.so/feed.xml",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://kciter.so/feed.xml",
+          "bytes": 35192,
+          "items": 58,
+          "sample": [
+            {
+              "publishedAt": "Mon, 20 Jul 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Sun, 12 Jul 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 03 Apr 2026 00:00:00 GMT",
+              "encodedBodyChars": 0,
+              "contentChars": 138,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://kciter.so/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://kciter.so/feed.xml",
+        "observedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "matchedOriginalUrls": [
+          "https://kciter.so/posts/server-monitoring-analysis-guide/"
+        ],
+        "latestFeedDate": "2026-07-20T00:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://nolanlawson.com/",
+      "checkedAt": "2026-10-06T08:11:54.865Z",
+      "feeds": [
+        {
+          "url": "https://nolanlawson.com/feed/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://nolanlawson.com/feed/",
+          "bytes": 97842,
+          "items": 10,
+          "sample": [
+            {
+              "publishedAt": "Sat, 03 Oct 2026 20:49:29 +0000",
+              "encodedBodyChars": 13069,
+              "contentChars": 300,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Thu, 01 Oct 2026 00:35:17 +0000",
+              "encodedBodyChars": 11195,
+              "contentChars": 300,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 31 Aug 2026 13:14:54 +0000",
+              "encodedBodyChars": 8542,
+              "contentChars": 300,
+              "summaryChars": 0
+            }
+          ]
+        },
+        {
+          "url": "https://nolanlawson.com/feed/atom/",
+          "declaredType": "application/atom+xml",
+          "status": 200,
+          "finalUrl": "https://nolanlawson.com/feed/atom/",
+          "bytes": 98601,
+          "items": 10,
+          "sample": [
+            {
+              "publishedAt": "2026-10-03T20:49:29.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 13069,
+              "summaryChars": 300
+            },
+            {
+              "publishedAt": "2026-10-01T00:35:17.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 11195,
+              "summaryChars": 300
+            },
+            {
+              "publishedAt": "2026-08-31T13:14:54.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 8542,
+              "summaryChars": 300
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://nolanlawson.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://nolanlawson.com/feed/",
+        "observedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "matchedOriginalUrls": [
+          "https://nolanlawson.com/2026/10/03/why-dont-more-developers-use-the-platform/"
+        ],
+        "latestFeedDate": "2026-10-03T20:49:29.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://matduggan.com/",
+      "checkedAt": "2026-10-06T08:11:54.866Z",
+      "feeds": [
+        {
+          "url": "https://matduggan.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://matduggan.com/rss/",
+          "bytes": 281456,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Fri, 02 Oct 2026 10:30:51 GMT",
+              "encodedBodyChars": 37252,
+              "contentChars": 346,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 25 Sep 2026 12:00:44 GMT",
+              "encodedBodyChars": 15044,
+              "contentChars": 276,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 12:00:18 GMT",
+              "encodedBodyChars": 11343,
+              "contentChars": 822,
+              "summaryChars": 0
+            }
+          ]
+        },
+        {
+          "url": "https://matduggan.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://matduggan.com/rss/",
+          "bytes": 281456,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Fri, 02 Oct 2026 10:30:51 GMT",
+              "encodedBodyChars": 37252,
+              "contentChars": 346,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 25 Sep 2026 12:00:44 GMT",
+              "encodedBodyChars": 15044,
+              "contentChars": 276,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 12:00:18 GMT",
+              "encodedBodyChars": 11343,
+              "contentChars": 822,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://matduggan.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://matduggan.com/rss/",
+        "observedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "matchedOriginalUrls": [
+          "https://matduggan.com/what-does-my-dream-os-ui-look-like/"
+        ],
+        "latestFeedDate": "2026-10-02T10:30:51.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://arslan.io/",
+      "checkedAt": "2026-10-06T08:11:58.236Z",
+      "feeds": [
+        {
+          "url": "https://arslan.io/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://arslan.io/rss/",
+          "bytes": 396493,
+          "items": 15,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 14:00:54 GMT",
+              "encodedBodyChars": 48102,
+              "contentChars": 500,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 11 Sep 2026 16:18:06 GMT",
+              "encodedBodyChars": 23860,
+              "contentChars": 1107,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 10 Aug 2026 18:04:27 GMT",
+              "encodedBodyChars": 11550,
+              "contentChars": 145,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://arslan.io/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://arslan.io/rss/",
+        "observedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "matchedOriginalUrls": [
+          "https://arslan.io/2026/10/05/the-lamps-in-my-house/"
+        ],
+        "latestFeedDate": "2026-10-05T14:00:54.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://thenewstack.io/",
+      "checkedAt": "2026-10-06T08:11:58.237Z",
+      "feeds": [
+        {
+          "url": "https://thenewstack.io/blog/feed/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://thenewstack.io/blog/feed/",
+          "bytes": 330881,
+          "items": 26,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 21:55:12 +0000",
+              "encodedBodyChars": 7056,
+              "contentChars": 871,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 21:49:57 +0000",
+              "encodedBodyChars": 10087,
+              "contentChars": 808,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 19:29:15 +0000",
+              "encodedBodyChars": 11517,
+              "contentChars": 933,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://thenewstack.io/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://thenewstack.io/blog/feed/",
+        "observedOriginalUrls": [
+          "https://thenewstack.io/openai-decision-api-luna"
+        ],
+        "matchedOriginalUrls": [],
+        "latestFeedDate": "2026-10-05T21:55:12.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://simonwillison.net/",
+      "checkedAt": "2026-10-06T08:11:58.235Z",
+      "feeds": [
+        {
+          "url": "https://simonwillison.net/atom/everything/",
+          "declaredType": "application/atom+xml",
+          "status": 200,
+          "finalUrl": "https://simonwillison.net/atom/everything/",
+          "bytes": 164494,
+          "items": 30,
+          "sample": [
+            {
+              "publishedAt": "2026-10-05T23:56:47.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 1804
+            },
+            {
+              "publishedAt": "2026-10-04T23:34:00.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 6120
+            },
+            {
+              "publishedAt": "2026-10-03T23:34:02.000Z",
+              "encodedBodyChars": 0,
+              "contentChars": 0,
+              "summaryChars": 3707
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://simonwillison.net/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://simonwillison.net/atom/everything/",
+        "observedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "matchedOriginalUrls": [
+          "https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/"
+        ],
+        "latestFeedDate": "2026-10-05T23:56:47.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://openai.com/news/",
+      "checkedAt": "2026-10-06T08:11:59.616Z",
+      "feeds": [],
+      "status": 403,
+      "finalUrl": "https://openai.com/news/"
+    },
+    {
+      "siteUrl": "https://blog.cloudflare.com/",
+      "checkedAt": "2026-10-06T08:11:59.615Z",
+      "feeds": [
+        {
+          "url": "https://blog.cloudflare.com/rss/",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://blog.cloudflare.com/rss/",
+          "bytes": 281433,
+          "items": 20,
+          "sample": [
+            {
+              "publishedAt": "Mon, 05 Oct 2026 13:00:00 GMT",
+              "encodedBodyChars": 19873,
+              "contentChars": 194,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Mon, 05 Oct 2026 13:00:00 GMT",
+              "encodedBodyChars": 8974,
+              "contentChars": 281,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Fri, 02 Oct 2026 18:00:00 GMT",
+              "encodedBodyChars": 17187,
+              "contentChars": 206,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://blog.cloudflare.com/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://blog.cloudflare.com/rss/",
+        "observedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "matchedOriginalUrls": [
+          "https://blog.cloudflare.com/next-git-platform-on-cloudflare/",
+          "https://blog.cloudflare.com/announcing-cloudflare-ohttp-gateway/"
+        ],
+        "latestFeedDate": "2026-10-05T13:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://www.techspot.com/",
+      "checkedAt": "2026-10-06T08:11:59.614Z",
+      "feeds": [],
+      "status": 403,
+      "finalUrl": "https://www.techspot.com/"
+    },
+    {
+      "siteUrl": "https://www.upstage.ai/",
+      "checkedAt": "2026-10-06T08:11:59.844Z",
+      "feeds": [],
+      "status": 200,
+      "finalUrl": "https://www.upstage.ai/"
+    },
+    {
+      "siteUrl": "https://reflection.ai/",
+      "checkedAt": "2026-10-06T08:11:59.841Z",
+      "feeds": [],
+      "status": 200,
+      "finalUrl": "https://reflection.ai/"
+    },
+    {
+      "siteUrl": "https://threedots.tech/",
+      "checkedAt": "2026-10-06T08:11:59.843Z",
+      "feeds": [
+        {
+          "url": "https://threedots.tech/index.xml",
+          "declaredType": "application/rss+xml",
+          "status": 200,
+          "finalUrl": "https://threedots.tech/index.xml",
+          "bytes": 4154412,
+          "items": 69,
+          "sample": [
+            {
+              "publishedAt": "Thu, 20 Aug 2026 00:00:00 +0200",
+              "encodedBodyChars": 0,
+              "contentChars": 22479,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Thu, 06 Aug 2026 00:00:00 +0200",
+              "encodedBodyChars": 0,
+              "contentChars": 11567,
+              "summaryChars": 0
+            },
+            {
+              "publishedAt": "Wed, 28 Jan 2026 16:00:00 +0000",
+              "encodedBodyChars": 0,
+              "contentChars": 46227,
+              "summaryChars": 0
+            }
+          ]
+        }
+      ],
+      "status": 200,
+      "finalUrl": "https://threedots.tech/",
+      "sampleCoverage": {
+        "checkedFeedUrl": "https://threedots.tech/index.xml",
+        "observedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "matchedOriginalUrls": [
+          "https://threedots.tech/post/ddd-and-ai-coding/"
+        ],
+        "latestFeedDate": "2026-08-19T22:00:00.000Z"
+      }
+    },
+    {
+      "siteUrl": "https://2026.stateofdevs.com/en-US",
+      "checkedAt": "2026-10-07T09:23:05.788Z",
+      "status": 200,
+      "finalUrl": "https://2026.stateofdevs.com/en-US",
+      "feeds": [],
+      "feedDiscovery": "개요·About·Devographics 홈페이지의 RSS·Atom alternate 및 feed 링크 확인. 공개 링크 미발견이며 피드 부재는 미확정",
+      "verifiedPages": [
+        {
+          "url": "https://2026.stateofdevs.com/en-US",
+          "status": 200
+        },
+        {
+          "url": "https://2026.stateofdevs.com/en-US/about",
+          "status": 200
+        },
+        {
+          "url": "https://devographics.com/",
+          "status": 200
+        }
+      ],
+      "sourceReview": {
+        "publisher": "Devographics",
+        "contentType": "annual_survey_report",
+        "collectionPriority": "사용자 지정 수집 후보",
+        "suggestedCategory": "developer",
+        "collectionMode": "연도별 보고서 URL을 등록하고 변경 여부 확인. 같은 연도·언어는 중복 등록하지 않음",
+        "surveyPeriod": {
+          "start": "2026-07-05",
+          "end": "2026-09-05"
+        },
+        "respondents": 5463,
+        "topics": [
+          "경력",
+          "직장",
+          "AI",
+          "건강",
+          "세계관",
+          "취미"
+        ],
+        "publicationDate": null,
+        "publicationDateStatus": "공식 소개 페이지의 발행일과 조사 기간 불일치, 미확정",
+        "publicationDateEvidence": {
+          "url": "https://2026.stateofdevs.com/en-US/about",
+          "displayedResultPublicationDate": "2025-09-25",
+          "note": "조사 종료일보다 앞선 날짜. 원문 발행일로 채택하거나 임의로 연도를 수정하지 않음"
+        },
+        "bodyStatus": "개요·소개 텍스트 확인. 주제별 전체 본문·도표 추출과 저장·번역은 미검증",
+        "displayProposal": "개발 분야 목록에 연례 보고서 표시. 한국어 제목·짧은 요약·조사 기간·응답자 수·원문 링크 제공. 상세에는 항목별 응답 수와 원문 도표 링크 표시",
+        "surveyLimitation": "자발적 참여 표본으로 전체 개발자를 대표한다고 단정할 수 없음"
+      }
+    }
+  ]
+}

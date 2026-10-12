@@ -3,19 +3,27 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
-import { ArrowLeft, Share2, Loader2 } from "lucide-react"
+import { ArrowLeft, Share2, ExternalLink, Loader2 } from "lucide-react"
 import Image from "next/image"
+import { decodeHtmlEntities } from "@/lib/text"
+import { getArticleContent } from "@/lib/article-content"
+import { TECH_NEWS_CATEGORY_VALUES, getNewsCategoryLabel } from "@/lib/news-categories"
+import { getSafeNewsUrl } from "@/lib/news-links"
+import { useToast } from "@/hooks/use-toast"
+import type { NewsTranslationView } from "@/lib/news-translation"
 
 interface NewsDetail {
   id: string
   title: string
-  description: string
-  content: string
+  description: string | null
+  content: string | null
   imageUrl?: string
-  sourceUrl: string
+  sourceUrl: string | null
   source: string
+  category?: string | null
   author?: string
   publishedAt: string
+  translation?: NewsTranslationView
 }
 
 // 뉴스 상세 페이지 컴포넌트
@@ -26,6 +34,11 @@ export default function NewsDetailPage() {
   const router = useRouter()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [sharing, setSharing] = useState(false)
+  const [showOriginal, setShowOriginal] = useState(false)
+  const [translationRetry, setTranslationRetry] = useState(0)
+  const { toast } = useToast()
 
   // 페이지 로드 시 스크롤을 최상단으로 강제 이동
   useEffect(() => {
@@ -55,48 +68,73 @@ export default function NewsDetailPage() {
   }, [params.id])
 
   useEffect(() => {
-    // Input: params.id (현재 뉴스 ID)
-    // Output: 성공 시 `news` 상태를 채우고, 완료 시 `loading=false`로 전환
+    const controller = new AbortController()
+    setNews(null)
+    setShowOriginal(false)
+    setError(null)
+    setLoading(true)
+
     const fetchNews = async () => {
       try {
-        const response = await fetch(`/api/news/${params.id}`)
-        if (response.ok) {
-          const data = await response.json()
-          setNews(data)
+        const response = await fetch(`/api/news/${encodeURIComponent(String(params.id))}`, {
+          signal: controller.signal,
+        })
+        const data = await response.json()
+        if (controller.signal.aborted) return
+        if (!response.ok) {
+          throw new Error(response.status === 404 ? "뉴스를 찾을 수 없습니다." : data.error || "뉴스를 불러오지 못했습니다.")
         }
+        setNews(data)
       } catch (error) {
-        console.error("Error fetching news:", error)
+        if (controller.signal.aborted) return
+        console.error("뉴스 상세 조회 실패:", error)
+        setError(error instanceof Error ? error.message : "뉴스를 불러오지 못했습니다.")
       } finally {
-        setLoading(false)
-        // 데이터 로드 후에도 스크롤 위치 확인
-        window.scrollTo(0, 0)
-        document.documentElement.scrollTop = 0
-        document.body.scrollTop = 0
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
-    if (params.id) {
-      fetchNews()
+    if (params.id) void fetchNews()
+    else setLoading(false)
+    return () => controller.abort()
+  }, [params.id, translationRetry])
+
+  const translation = news?.translation
+  const hasTranslation = Boolean(translation?.title || translation?.content)
+  const articleText = getArticleContent(news ? {
+    title: !showOriginal && translation?.title ? translation.title : news.title,
+    description: !showOriginal && translation?.preview !== null && translation?.preview !== undefined ? translation.preview : news.description,
+    content: !showOriginal && translation?.content !== null && translation?.content !== undefined ? translation.content : news.content,
+  } : { title: "" })
+  const decodedTitle = articleText.title
+  const sourceLabel = decodeHtmlEntities(news?.source).trim() || "출처 미확인"
+  const authorLabel = decodeHtmlEntities(news?.author).trim()
+  const sourceUrl = getSafeNewsUrl(news?.sourceUrl)
+  const isTechFeed = TECH_NEWS_CATEGORY_VALUES.some((value) => value === news?.category)
+  const handleShare = async () => {
+    if (!news || sharing) return
+    setSharing(true)
+    try {
+      const url = window.location.href
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: decodedTitle, url })
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+        toast({ title: "링크를 복사했습니다", description: "원하는 곳에 붙여넣어 기사를 공유하세요." })
+      } else {
+        throw new Error("주소창의 링크를 복사해 기사를 공유해주세요.")
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return
+      toast({
+        title: "공유하지 못했습니다",
+        description: "주소창의 링크를 복사해 기사를 공유해주세요.",
+        variant: "destructive",
+      })
+    } finally {
+      setSharing(false)
     }
-  }, [params.id])
-
-
-  // HTML 엔티티 디코딩
-  // Input: 엔티티가 포함될 수 있는 문자열(또는 null/undefined)
-  // Output: 디코딩된 일반 문자열. 비정상 입력이면 빈 문자열 반환
-  const decodeHtmlEntities = (text: string | null | undefined): string => {
-    if (!text || typeof text !== "string") return ""
-    // SSR 환경에서는 DOM API(document)가 없으므로 원본 문자열을 그대로 사용
-    if (typeof window === "undefined") return text
-    const textarea = document.createElement("textarea")
-    textarea.innerHTML = text
-    return textarea.value || ""
   }
-
-  const decodedTitle = news ? decodeHtmlEntities(news.title) : ""
-  const decodedDescription = news ? decodeHtmlEntities(news.description) : ""
-  const decodedContent = news ? decodeHtmlEntities(news.content) : ""
-
   // 뒤로가기/목록 복귀 처리
   // Input: 없음(클릭 이벤트로 호출)
   // Output: 현재 창 닫기 시도 후 실패하면 "/" 경로로 이동
@@ -129,7 +167,8 @@ export default function NewsDetailPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-3xl mx-auto px-4 py-12 text-center">
-          <p className="text-muted-foreground">뉴스를 찾을 수 없습니다.</p>
+          <p className="text-muted-foreground" role="alert">{error || "뉴스를 찾을 수 없습니다."}</p>
+          <button type="button" onClick={handleBack} className="mt-4 text-primary hover:underline">뉴스 목록으로</button>
         </div>
       </div>
     )
@@ -153,11 +192,16 @@ export default function NewsDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-            <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-primary/20 text-primary">
-              {news.source}
-            </span>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-primary/20 text-primary">
+                {getNewsCategoryLabel(news.category)}
+              </span>
+              <span className="inline-flex px-3 py-1 rounded-full text-sm text-muted-foreground bg-muted">
+                출처: {sourceLabel}
+              </span>
+            </div>
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg border border-border bg-card hover:bg-input transition">
+              <button type="button" onClick={handleShare} disabled={sharing} aria-label="기사 공유" className="p-2 rounded-lg border border-border bg-card hover:bg-input transition disabled:opacity-50">
                 <Share2 className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -166,18 +210,42 @@ export default function NewsDetailPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">{decodedTitle}</h1>
 
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            {news.author && <p>작성자: {news.author}</p>}
+            {authorLabel && <p>작성: {authorLabel}</p>}
             <p>
-              {new Date(news.publishedAt).toLocaleDateString("ko-KR", {
+              {isTechFeed ? "게시·갱신:" : "발행:"} <time dateTime={news.publishedAt} title={isTechFeed ? "피드가 제공한 게시 또는 갱신 시각, 한국 시간" : "한국 시간 기준"}>{new Date(news.publishedAt).toLocaleDateString("ko-KR", {
+                timeZone: "Asia/Seoul",
                 year: "numeric",
                 month: "long",
                 day: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
-              })}
+              })}</time> (한국 시간)
             </p>
           </div>
         </div>
+
+        {(translation?.applicable || translation?.isSummary) && (
+          <div className="mb-6 rounded-lg border border-border bg-card p-4">
+            {hasTranslation && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button type="button" aria-pressed={!showOriginal} onClick={() => setShowOriginal(false)}
+                  className="rounded-md border border-border px-3 py-2 text-sm aria-pressed:bg-primary aria-pressed:text-primary-foreground">한국어로 읽기</button>
+                <button type="button" aria-pressed={showOriginal} onClick={() => setShowOriginal(true)}
+                  className="rounded-md border border-border px-3 py-2 text-sm aria-pressed:bg-primary aria-pressed:text-primary-foreground">원문 보기</button>
+              </div>
+            )}
+            {translation.enabled && translation.contentStatus !== "ready" && (
+              <button type="button" onClick={() => setTranslationRetry((value) => value + 1)}
+                className="mb-2 text-sm text-primary hover:underline">번역 상태 확인</button>
+            )}
+            <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+              {translation.contentStatus === "ready" ? "자동 번역입니다. 원문도 함께 확인할 수 있습니다."
+                : translation.enabled ? "AI 요약을 먼저 읽을 수 있습니다. 전체 본문의 한국어 번역은 준비 중이며 그동안 원문을 표시합니다."
+                : translation.isSummary ? "AI가 정리한 요약입니다. 본문은 원문으로 제공합니다."
+                : "한국어 번역이 아직 준비되지 않았습니다. 준비된 번역이 없는 부분은 원문으로 표시합니다."}
+            </p>
+          </div>
+        )}
 
         {/* Image */}
         {news.imageUrl && (
@@ -193,27 +261,46 @@ export default function NewsDetailPage() {
           </div>
         )}
 
-        {/* Content */}
-        <div className="prose prose-invert max-w-none mb-8">
-          {decodedDescription && <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{decodedDescription}</p>}
-
-          {decodedContent && <div className="text-foreground leading-relaxed whitespace-pre-wrap">{decodedContent}</div>}
+        {/* 기사 소개와 본문 */}
+        <div className="max-w-none mb-8">
+          {articleText.description && (
+            <section className="mb-6" aria-label={!showOriginal && translation?.isSummary ? "AI 요약" : "소개"}>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-2">{!showOriginal && translation?.isSummary ? "AI 요약" : "소개"}</h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">{articleText.description}</p>
+            </section>
+          )}
+          {articleText.content ? (
+            <section aria-label="기사 본문" className="text-foreground leading-relaxed whitespace-pre-wrap">
+              {articleText.content}
+            </section>
+          ) : (
+            <p className="p-4 rounded-lg border border-border bg-muted text-muted-foreground">
+              {sourceUrl
+                ? "표시할 본문이 없는 소식입니다. 전체 글이나 토론은 아래 출처 링크에서 확인해 주세요."
+                : "표시할 본문이 없고 출처 링크도 확인할 수 없습니다."}
+            </p>
+          )}
         </div>
 
-        {/* Source Link */}
-        {news.sourceUrl && (
-          <div className="p-4 rounded-lg border border-border bg-card">
-            <a
-              href={news.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline flex items-center gap-2"
-            >
-              원문 보기
-              <Share2 className="w-4 h-4" />
-            </a>
-          </div>
-        )}
+        {/* 기사 원문 */}
+        <div className="p-4 rounded-lg border border-border bg-card">
+          {sourceUrl ? (
+            <>
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-2"
+              >
+                출처에서 읽기
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
+              </a>
+              <p className="text-sm text-muted-foreground mt-2">출처 링크를 새 탭에서 엽니다. 소개·토론 페이지라면 그 안의 원문 링크를 확인하세요.</p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">출처 링크를 확인할 수 없습니다.</p>
+          )}
+        </div>
       </main>
 
       <button

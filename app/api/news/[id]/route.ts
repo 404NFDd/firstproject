@@ -1,18 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifyAccessToken } from "@/lib/auth"
+import { EXCLUDED_COMMUNITY_SOURCES } from "@/lib/feed-sources"
+import { getRequestUser } from "@/lib/request-auth"
+import { getArticleTranslation, getListTranslations } from "@/lib/news-translation"
+import { isCurationArticle } from "@/lib/news-curation"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const accessToken = request.cookies.get("accessToken")?.value
-    const payload = await verifyAccessToken(accessToken || "")
+    const payload = await getRequestUser(request)
 
     const news = await prisma.news.findUnique({
       where: { id },
     })
 
-    if (!news) {
+    if (!news || EXCLUDED_COMMUNITY_SOURCES.includes(news.source)) {
+      return NextResponse.json({ error: "뉴스를 찾을 수 없습니다." }, { status: 404 })
+    }
+    if (isCurationArticle(news) && !(await getListTranslations([news])).has(news.id)) {
       return NextResponse.json({ error: "뉴스를 찾을 수 없습니다." }, { status: 404 })
     }
 
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    return NextResponse.json(news)
+    return NextResponse.json({ ...news, translation: await getArticleTranslation(news) }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     console.error("Error fetching news detail:", error)
     return NextResponse.json({ error: "뉴스 상세 정보를 불러올 수 없습니다." }, { status: 500 })

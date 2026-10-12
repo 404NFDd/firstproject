@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Header } from "@/components/header"
 import { User, Mail, LogOut, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,152 +20,220 @@ import {
 interface UserProfile {
   id: string
   email: string
-  name: string
-  image?: string
-  emailSubscription?: number
+  name: string | null
+  image?: string | null
 }
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { data: session, status, update } = useSession()
+  const { toast } = useToast()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+  const [reload, setReload] = useState(0)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({ name: "" })
   const [emailSubscribed, setEmailSubscribed] = useState(false)
   const [showUnsubscribeDialog, setShowUnsubscribeDialog] = useState(false)
   const [togglingEmail, setTogglingEmail] = useState(false)
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const requestController = useRef<AbortController | null>(null)
+  const subscriptionVersion = useRef(0)
+  const savingProfileRef = useRef(false)
+  const togglingEmailRef = useRef(false)
+  const sendingTestEmailRef = useRef(false)
+  const loggingOutRef = useRef(false)
 
   useEffect(() => {
-    // 프로필 초기 로딩
-    // Input: 현재 로그인 세션 쿠키(서버에서 검증)
-    // Output: user/formData/emailSubscribed 상태를 초기화, 미인증이면 로그인 페이지로 이동
+    if (status === "loading") return
+    if (status === "unauthenticated") {
+      router.replace("/auth/login")
+      return
+    }
+    const controller = new AbortController()
+    requestController.current = controller
+    const version = ++subscriptionVersion.current
     const fetchUser = async () => {
+      setLoading(true)
+      setLoadError("")
       try {
-        const response = await fetch("/api/auth/me")
-        if (!response.ok) {
-          router.push("/auth/login")
+        const response = await fetch("/api/auth/me", { signal: controller.signal })
+        const data = await response.json()
+        if (response.status === 401) {
+          toast({ title: "로그인이 필요합니다", description: "다시 로그인해 주세요." })
+          router.replace("/auth/login")
           return
         }
-        const data = await response.json()
-        setUser(data.user)
-        setFormData({ name: data.user.name })
-        
-        // 메일 구독 상태 조회
-        const subscribeResponse = await fetch("/api/email/subscribe")
-        if (subscribeResponse.ok) {
-          const subscribeData = await subscribeResponse.json()
-          setEmailSubscribed(subscribeData.emailSubscription === true)
+        if (!response.ok) throw new Error(data.error || "프로필을 불러오지 못했습니다.")
+
+        const subscribeResponse = await fetch("/api/email/subscribe", { signal: controller.signal })
+        const subscribeData = await subscribeResponse.json()
+        if (subscribeResponse.status === 401) {
+          router.replace("/auth/login")
+          return
         }
-      } catch (error) {
-        console.error("Error fetching user:", error)
-        router.push("/auth/login")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUser()
-  }, [router])
-
-  // 안전한 로그인 페이지 리다이렉트 래퍼
-  // Input: 없음
-  // Output: signOut 콜백으로 /auth/login 이동
-  const redirectToLogin = async () => {
-    try {
-      await signOut({ callbackUrl: "/auth/login" })
-    } catch (error) {
-      console.error("Error while redirecting to login:", error)
-    }
-  }
-
-  // 로그아웃 처리
-  // Input: 없음
-  // Output: 서버 로그아웃 API 호출 후 로그인 페이지 이동
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" })
-    } catch (error) {
-      console.error("Error logging out:", error)
-    } finally {
-      await redirectToLogin()
-    }
-  }
-
-  // 프로필 저장
-  // Input: formData(name)
-  // Output: 성공 시 user 상태 갱신 및 편집 모드 종료
-  const handleSaveProfile = async () => {
-    try {
-      const response = await fetch("/api/auth/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
+        if (!subscribeResponse.ok || typeof subscribeData.emailSubscription !== "boolean") {
+          throw new Error(subscribeData.error || "구독 상태를 불러오지 못했습니다.")
+        }
+        if (controller.signal.aborted) return
         setUser(data.user)
-        setIsEditing(false)
+        setFormData({ name: data.user.name ?? "" })
+        if (version === subscriptionVersion.current) setEmailSubscribed(subscribeData.emailSubscription)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        setLoadError(error instanceof Error ? error.message : "프로필을 불러오지 못했습니다.")
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
       }
+    }
+    void fetchUser()
+    return () => {
+      controller.abort()
+      if (requestController.current === controller) requestController.current = null
+    }
+  }, [status, session?.user?.id, reload, router, toast])
+
+  useEffect(() => {
+    const onSubscriptionChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: unknown; subscribed?: unknown }>).detail
+      if (status !== "authenticated" || !detail || detail.userId !== session?.user?.id || typeof detail.subscribed !== "boolean") return
+      subscriptionVersion.current++
+      setEmailSubscribed(detail.subscribed)
+    }
+    window.addEventListener("email-subscription-changed", onSubscriptionChange)
+    return () => window.removeEventListener("email-subscription-changed", onSubscriptionChange)
+  }, [status, session?.user?.id])
+
+  const readResponse = async (response: Response, fallback: string) => {
+    const data = await response.json().catch(() => null)
+    if (response.status === 401) router.replace("/auth/login")
+    if (!response.ok) throw new Error(data?.error || fallback)
+    if (!data) throw new Error(fallback)
+    return data
+  }
+
+  const handleLogout = async () => {
+    if (loggingOutRef.current) return
+    loggingOutRef.current = true
+    setLoggingOut(true)
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" })
+      const cleanupFailed = response.status === 500
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        if (!cleanupFailed) throw new Error(data?.error || "로그아웃에 실패했습니다.")
+        // 서버는 DB 정리에 실패해도 인증 쿠키를 지웁니다.
+        toast({
+          title: "로그아웃 처리 알림",
+          description: "로그인 정보는 지웠지만 서버의 토큰 정리에 실패했습니다.",
+          variant: "destructive",
+        })
+      }
+      try {
+        await signOut({ redirect: false })
+      } catch (error) {
+        console.error("로그아웃 화면 갱신 실패:", error)
+        const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" })
+        const serverSession: unknown = await sessionResponse.json().catch(() => null)
+        if (!sessionResponse.ok || !serverSession || typeof serverSession !== "object" ||
+          Array.isArray(serverSession) || Object.keys(serverSession).length !== 0) {
+          throw new Error("로그아웃 상태를 확인하지 못했습니다. 다시 시도해 주세요.")
+        }
+        // 현재 탭의 SessionProvider 캐시도 새 페이지에서 초기화합니다.
+        window.location.assign(new URL("/auth/login", window.location.origin).href)
+        return
+      }
+      if (!cleanupFailed) toast({ title: "로그아웃되었습니다" })
+      router.replace("/auth/login")
+      router.refresh()
     } catch (error) {
-      console.error("Error updating profile:", error)
+      toast({ title: "로그아웃 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
+    } finally {
+      loggingOutRef.current = false
+      setLoggingOut(false)
     }
   }
 
-  // 이메일 브리핑 구독 상태 변경
-  // Input: subscribe(true=구독, false=해제)
-  // Output: 성공 시 emailSubscribed/다이얼로그 상태 반영
-  const handleToggleEmailSubscription = async (subscribe: boolean) => {
-    if (togglingEmail) return
-    setTogglingEmail(true)
+  const handleSaveProfile = async () => {
+    if (savingProfileRef.current || status !== "authenticated" || !user) return
+    savingProfileRef.current = true
+    setSavingProfile(true)
+    const signal = requestController.current?.signal
     try {
-      const response = await fetch("/api/email/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscribe }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        setEmailSubscribed(data.emailSubscription === 1)
-        setShowUnsubscribeDialog(false)
+      const data = await readResponse(await fetch("/api/auth/profile", {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData), signal,
+      }), "프로필을 저장하지 못했습니다.")
+      if (signal?.aborted) return
+      if (!data.user) throw new Error("저장된 프로필을 확인하지 못했습니다.")
+      setUser(data.user)
+      setFormData({ name: data.user.name ?? "" })
+      setIsEditing(false)
+      toast({ title: "프로필을 저장했습니다" })
+      try {
+        const updatedSession = await update()
+        if (!updatedSession || updatedSession.user?.name !== data.user.name) throw new Error("세션 표시 갱신 실패")
+      } catch {
+        toast({
+          title: "프로필은 저장했습니다",
+          description: "로그인 표시를 갱신하지 못했습니다. 다시 로그인하면 저장한 이름이 표시됩니다.",
+        })
       }
     } catch (error) {
-      console.error("Error toggling email subscription:", error)
+      if (!signal?.aborted) toast({ title: "프로필 저장 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
     } finally {
+      savingProfileRef.current = false
+      setSavingProfile(false)
+    }
+  }
+
+  const handleToggleEmailSubscription = async (subscribe: boolean) => {
+    if (togglingEmailRef.current || status !== "authenticated" || !user) return
+    togglingEmailRef.current = true
+    setTogglingEmail(true)
+    const signal = requestController.current?.signal
+    try {
+      const data = await readResponse(await fetch("/api/email/subscribe", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscribe }), signal,
+      }), "구독 설정을 변경하지 못했습니다.")
+      if (signal?.aborted) return
+      if (!data.success || ![0, 1].includes(data.emailSubscription)) throw new Error("구독 변경 결과를 확인하지 못했습니다.")
+      setEmailSubscribed(data.emailSubscription === 1)
+      setShowUnsubscribeDialog(false)
+      window.dispatchEvent(new CustomEvent("email-subscription-changed", {
+        detail: { userId: user.id, subscribed: data.emailSubscription === 1 },
+      }))
+      toast({ title: data.message || "구독 설정을 변경했습니다" })
+    } catch (error) {
+      if (!signal?.aborted) toast({ title: "구독 변경 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
+    } finally {
+      togglingEmailRef.current = false
       setTogglingEmail(false)
     }
   }
 
-  const handleUnsubscribeClick = () => {
-    setShowUnsubscribeDialog(true)
-  }
+  const handleUnsubscribeClick = () => setShowUnsubscribeDialog(true)
 
-  // 테스트 브리핑 메일 발송
-  // Input: 없음(현재 로그인 사용자 이메일 사용)
-  // Output: alert로 성공/실패 결과 표시
   const handleSendTestEmail = async () => {
-    if (sendingTestEmail) return
+    if (sendingTestEmailRef.current || status !== "authenticated" || !user) return
+    sendingTestEmailRef.current = true
     setSendingTestEmail(true)
+    const signal = requestController.current?.signal
     try {
-      const response = await fetch("/api/email/test-briefing", {
-        method: "POST",
-      })
-      const data = await response.json()
-      if (data.success) {
-        alert(`✅ 테스트 메일이 ${data.message || "전송되었습니다"}`)
-      } else {
-        alert(`❌ 메일 전송 실패: ${data.error || "알 수 없는 오류"}`)
-      }
+      const data = await readResponse(await fetch("/api/email/test-briefing", { method: "POST", signal }), "테스트 메일 발송에 실패했습니다.")
+      if (signal?.aborted) return
+      if (!data.success) throw new Error(data.error || "테스트 메일 발송에 실패했습니다.")
+      toast({ title: data.skipped ? "발송할 뉴스가 없습니다" : "테스트 메일을 전송했습니다", description: data.message })
     } catch (error) {
-      console.error("Error sending test email:", error)
-      alert("❌ 테스트 메일 전송 중 오류가 발생했습니다.")
+      if (!signal?.aborted) toast({ title: "테스트 메일 발송 실패", description: error instanceof Error ? error.message : "다시 시도해 주세요.", variant: "destructive" })
     } finally {
+      sendingTestEmailRef.current = false
       setSendingTestEmail(false)
     }
   }
-
-  if (loading) {
+  if (loading || status !== "authenticated") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -172,6 +241,17 @@ export default function ProfilePage() {
     )
   }
 
+  if (loadError || !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 py-12">
+          <p role="alert" className="text-destructive">{loadError || "프로필을 불러오지 못했습니다."}</p>
+          <button onClick={() => setReload((value) => value + 1)} className="mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground">다시 시도</button>
+        </main>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -191,10 +271,11 @@ export default function ProfilePage() {
 
               <button
                 onClick={handleLogout}
+                disabled={loggingOut}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition"
               >
                 <LogOut className="w-4 h-4" />
-                로그아웃
+                {loggingOut ? "로그아웃 중..." : "로그아웃"}
               </button>
             </div>
           </div>
@@ -211,6 +292,8 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.name}
+                      maxLength={191}
+                      disabled={savingProfile}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
@@ -236,7 +319,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between">
                       <p className="text-foreground">
                         {emailSubscribed ? (
-                          <span className="text-primary font-medium">구독 중 - 매일 아침 8시에 뉴스 브리핑을 받고 있습니다</span>
+                          <span className="text-primary font-medium">구독 중 (종합 뉴스 브리핑)</span>
                         ) : (
                           <span className="text-muted-foreground">구독하지 않음</span>
                         )}
@@ -278,7 +361,7 @@ export default function ProfilePage() {
                         )}
                       </button>
                       <p className="text-xs text-muted-foreground mt-2 text-center">
-                        현재 로그인한 이메일로 테스트 메일을 전송합니다
+                        현재 로그인한 이메일로 테스트 메일을 전송합니다. 자동 발송이 설정된 환경에서는 한국 시각 오전 7시에 브리핑을 보냅니다.
                       </p>
                     </div>
                   </div>
@@ -290,12 +373,14 @@ export default function ProfilePage() {
                   <>
                     <button
                       onClick={handleSaveProfile}
+                      disabled={savingProfile}
                       className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
                     >
-                      저장
+                      {savingProfile ? "저장 중..." : "저장"}
                     </button>
                     <button
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => { setIsEditing(false); setFormData({ name: user.name ?? "" }) }}
+                      disabled={savingProfile}
                       className="flex-1 px-4 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-input transition"
                     >
                       취소

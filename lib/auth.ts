@@ -1,13 +1,25 @@
-import { jwtVerify, SignJWT } from "jose"
+import { jwtVerify, SignJWT, type JWTPayload } from "jose"
 import { cookies } from "next/headers"
+import { createHash } from "node:crypto"
 import { prisma } from "@/lib/prisma"
 
-const access_secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET || "access-secret")
-const refresh_secret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET || "refresh-secret")
-const ACCESS_TOKEN_MAX_AGE = Number(process.env.JWT_ACCESS_EXPIRES_IN) || 15 * 60
-const REFRESH_TOKEN_MAX_AGE = Number(process.env.JWT_REFRESH_EXPIRES_IN) || 7 * 24 * 60 * 60
+function getTokenSecret(name: "JWT_ACCESS_SECRET" | "JWT_REFRESH_SECRET") {
+  const secret = process.env[name]
+  if (!secret) throw new Error(`${name} 환경 변수가 필요합니다.`)
+  return new TextEncoder().encode(secret)
+}
+function getTokenMaxAge(name: "JWT_ACCESS_EXPIRES_IN" | "JWT_REFRESH_EXPIRES_IN", fallback: number) {
+  const value = process.env[name]
+  if (!value) return fallback
+  const seconds = Number(value)
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) throw new Error(`${name}은 양의 정수(초)여야 합니다.`)
+  return seconds
+}
 
-export interface TokenPayload {
+const ACCESS_TOKEN_MAX_AGE = getTokenMaxAge("JWT_ACCESS_EXPIRES_IN", 15 * 60)
+const REFRESH_TOKEN_MAX_AGE = getTokenMaxAge("JWT_REFRESH_EXPIRES_IN", 7 * 24 * 60 * 60)
+
+export interface TokenPayload extends JWTPayload {
   userId: string
   email: string
   iat?: number
@@ -18,20 +30,24 @@ export interface TokenPayload {
 // Input: 사용자 식별 payload
 // Output: 서명된 JWT access token 문자열
 export async function generateAccessToken(payload: TokenPayload) {
-  return await new SignJWT(payload)
+  return await new SignJWT({ ...payload, tokenType: "access" })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(`${process.env.JWT_ACCESS_EXPIRES_IN || 900}s`)
-    .sign(access_secret)
+    .setIssuedAt()
+    .setJti(crypto.randomUUID())
+    .setExpirationTime(`${ACCESS_TOKEN_MAX_AGE}s`)
+    .sign(getTokenSecret("JWT_ACCESS_SECRET"))
 }
 
 // Refresh Token 생성
 // Input: 사용자 식별 payload
 // Output: 서명된 JWT refresh token 문자열
 export async function generateRefreshToken(payload: TokenPayload) {
-  return await new SignJWT(payload)
+  return await new SignJWT({ ...payload, tokenType: "refresh" })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(`${process.env.JWT_REFRESH_EXPIRES_IN || 604800}s`)
-    .sign(refresh_secret)
+    .setIssuedAt()
+    .setJti(crypto.randomUUID())
+    .setExpirationTime(`${REFRESH_TOKEN_MAX_AGE}s`)
+    .sign(getTokenSecret("JWT_REFRESH_SECRET"))
 }
 
 // Access Token 검증
@@ -39,9 +55,10 @@ export async function generateRefreshToken(payload: TokenPayload) {
 // Output: 검증된 payload 또는 null
 export async function verifyAccessToken(token: string): Promise<TokenPayload | null> {
   try {
-    const verified = await jwtVerify(token, access_secret)
+    const verified = await jwtVerify(token, getTokenSecret("JWT_ACCESS_SECRET"), { algorithms: ["HS256"] })
+    if (typeof verified.payload.userId !== "string" || !verified.payload.userId || typeof verified.payload.email !== "string" || !verified.payload.email || typeof verified.payload.exp !== "number" || verified.payload.tokenType !== "access") return null
     return verified.payload as TokenPayload
-  } catch (err) {
+  } catch {
     return null
   }
 }
@@ -51,9 +68,10 @@ export async function verifyAccessToken(token: string): Promise<TokenPayload | n
 // Output: 검증된 payload 또는 null
 export async function verifyRefreshToken(token: string): Promise<TokenPayload | null> {
   try {
-    const verified = await jwtVerify(token, refresh_secret)
+    const verified = await jwtVerify(token, getTokenSecret("JWT_REFRESH_SECRET"), { algorithms: ["HS256"] })
+    if (typeof verified.payload.userId !== "string" || !verified.payload.userId || typeof verified.payload.email !== "string" || !verified.payload.email || typeof verified.payload.exp !== "number" || verified.payload.tokenType !== "refresh") return null
     return verified.payload as TokenPayload
-  } catch (err) {
+  } catch {
     return null
   }
 }
@@ -67,6 +85,7 @@ export async function setTokenCookie(name: string, value: string, maxAge: number
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
+    path: "/",
     maxAge,
   })
 }
@@ -103,6 +122,11 @@ export async function getRefreshToken() {
   return cookieStore.get("refreshToken")?.value
 }
 
+// 쿠키의 원문 JWT는 유지하고 DB에는 고정 길이 해시만 저장합니다.
+export function hashRefreshToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex")
+}
+
 // 사용자 refresh token DB 레코드 제거
 // Input: userId
 // Output: 해당 유저의 refresh token 일괄 삭제
@@ -115,32 +139,38 @@ export async function revokeUserRefreshTokens(userId: string) {
 // 로그인 세션 토큰 발급/저장
 // Input: 사용자 id/email
 // Output: access/refresh token과 refresh 만료시각
-export async function issueSessionTokens(user: { id: string; email: string }) {
-  const payload = {
-    userId: user.id,
-    email: user.email,
-  }
+interface SessionTokens {
+  accessToken: string
+  refreshToken: string
+  refreshTokenExpires: Date
+}
 
+export function issueSessionTokens(user: { id: string; email: string }): Promise<SessionTokens>
+export function issueSessionTokens(user: { id: string; email: string }, previousRefreshToken: string): Promise<SessionTokens | null>
+export async function issueSessionTokens(user: { id: string; email: string }, previousRefreshToken?: string): Promise<SessionTokens | null> {
+  const payload = { userId: user.id, email: user.email }
   const [accessToken, refreshToken] = await Promise.all([generateAccessToken(payload), generateRefreshToken(payload)])
   const refreshTokenExpires = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE * 1000)
 
-  await revokeUserRefreshTokens(user.id)
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: refreshTokenExpires,
-    },
+  const stored = await prisma.$transaction(async (tx) => {
+    if (previousRefreshToken !== undefined) {
+      const consumed = await tx.refreshToken.deleteMany({
+        where: { token: { in: [hashRefreshToken(previousRefreshToken), previousRefreshToken] }, userId: user.id, expiresAt: { gt: new Date() } },
+      })
+      if (consumed.count === 0) return false
+    } else {
+      await tx.refreshToken.deleteMany({ where: { userId: user.id } })
+    }
+    await tx.refreshToken.create({
+      data: { token: hashRefreshToken(refreshToken), userId: user.id, expiresAt: refreshTokenExpires },
+    })
+    return true
   })
+  if (!stored) return null
 
   await setTokenCookie("accessToken", accessToken, ACCESS_TOKEN_MAX_AGE)
   await setTokenCookie("refreshToken", refreshToken, REFRESH_TOKEN_MAX_AGE)
-
-  return {
-    accessToken,
-    refreshToken,
-    refreshTokenExpires,
-  }
+  return { accessToken, refreshToken, refreshTokenExpires }
 }
 
 export { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE }

@@ -1,141 +1,65 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { Mail, ArrowUpRight, ChevronDown } from "lucide-react"
+import { decodeHtmlEntities } from "@/lib/text"
+import { getArticleContent } from "@/lib/article-content"
+import { TECH_NEWS_CATEGORY_VALUES, getNewsCategoryLabel } from "@/lib/news-categories"
+import { getSafeNewsUrl } from "@/lib/news-links"
 
 interface NewsCardProps {
-  id: string
-  title: string
-  description: string
-  imageUrl?: string
-  source: string
-  publishedAt: string
-  onSendEmail?: (newsId: string) => void
+  id: string; title: string; originalTitle?: string; isTranslated?: boolean
+  description: string; content?: string | null; preview?: string
+  previewType?: "summary" | "description" | "content" | "none"
+  category?: string | null; author?: string | null; imageUrl?: string; sourceUrl?: string
+  source: string; publishedAt: string; onSendEmail?: (newsId: string) => void
 }
 
-export function NewsCard({
-  id,
-  title,
-  description,
-  imageUrl,
-  source,
-  publishedAt,
-  onSendEmail,
-}: NewsCardProps) {
-
-  // 카드 내부 이메일 버튼 클릭 처리
-  // Input: 클릭 이벤트, 현재 카드 id
-  // Output: 링크 이동을 막고 상위 onSendEmail 콜백 실행
-  const handleSendEmail = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    onSendEmail?.(id)
-  }
-
-  // 날짜 포맷터
-  // Input: ISO/Date 문자열
-  // Output: ko-KR 기준 "월 일 시:분" 형식 문자열
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("ko-KR", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  // HTML 엔티티 디코딩
-  // Input: 엔티티가 포함된 문자열(또는 null/undefined)
-  // Output: 디코딩된 일반 문자열
-  const decodeHtmlEntities = (text: string | null | undefined): string => {
-    if (!text || typeof text !== "string") return ""
-    if (typeof window === "undefined") return text
-    const textarea = document.createElement("textarea")
-    textarea.innerHTML = text
-    return textarea.value || ""
-  }
-
-  const decodedTitle = decodeHtmlEntities(title)
-  const decodedDescription = decodeHtmlEntities(description)
+export function NewsCard({ id, title, originalTitle, isTranslated, description, content,
+  preview: listPreview, previewType, category, author, sourceUrl, source, publishedAt, onSendEmail }: NewsCardProps) {
+  const [expanded, setExpanded] = useState(false)
+  const text = getArticleContent({ title, description, content })
+  const preview = listPreview ?? (text.description || text.content.split(/\n\s*\n/)[0])
+  const sourceLabel = decodeHtmlEntities(source).trim() || "출처 미확인"
+  const originalUrl = getSafeNewsUrl(sourceUrl)
+  const isTechFeed = TECH_NEWS_CATEGORY_VALUES.some((value) => value === category)
+  const isSummary = previewType === "summary"
+  const isExcerpt = previewType === "content" || (!previewType && !text.description && Boolean(text.content))
+  const date = new Date(publishedAt).toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+  })
 
   return (
-    <Link href={`/news/${id}`} target="_blank" rel="noopener noreferrer">
-      <article className="group h-full flex flex-col rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
-        {/* Image */}
-        <div className="relative w-full h-40 sm:h-48 overflow-hidden bg-muted">
-          {imageUrl ? (
-            <Image
-              src={imageUrl || "/placeholder.svg"}
-              alt={decodedTitle}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 mx-auto mb-2"></div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex flex-col flex-1 p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-primary/20 text-primary">
-              {source}
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={handleSendEmail}
-                className="text-muted-foreground hover:text-accent transition flex-shrink-0"
-                title="이메일로 발송"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <h3 className="text-sm sm:text-base font-bold text-foreground line-clamp-3 mb-2 group-hover:text-primary transition">
-            {decodedTitle}
-          </h3>
-
-          {decodedDescription && (
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{decodedDescription}</p>
-          )}
-
-          <div className="flex items-center justify-between">
-            <time className="text-xs text-muted-foreground">{formatDate(publishedAt)}</time>
-            <svg
-              className="w-4 h-4 text-muted-foreground group-hover:text-primary transition opacity-0 group-hover:opacity-100"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
-          </div>
-        </div>
-      </article>
-    </Link>
+    <article className="group min-w-0 py-5 pl-7 sm:pl-8">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
+        <span>{getNewsCategoryLabel(category)}</span>
+        <span aria-label={`출처: ${sourceLabel}`} className="break-all">{sourceLabel}</span>
+        <time dateTime={publishedAt} title={isTechFeed ? "피드가 제공한 게시 또는 갱신 시각, 한국 시간" : "한국 시간 기준"}>{isTechFeed ? "게시·갱신" : "발행"} {date}</time>
+        {isTranslated && <span title={originalTitle}>자동 번역</span>}
+      </div>
+      <h3 className="text-base sm:text-lg font-semibold leading-snug break-words">
+        <Link href={`/news/${id}`} className="hover:text-primary focus-visible:outline-2 focus-visible:outline-primary">{text.title}</Link>
+      </h3>
+      <p className={`mt-2 text-sm leading-relaxed text-muted-foreground whitespace-pre-line break-words ${expanded ? "" : "line-clamp-2"}`}>
+        {preview || "소개 문구가 없는 소식입니다. 상세 페이지에서 출처 링크를 확인하세요."}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+        {isSummary && <span className="font-medium text-foreground">AI 요약</span>}
+        {!isSummary && isExcerpt && <span>본문 발췌</span>}
+        {author && <span>작성: {decodeHtmlEntities(author)}</span>}
+        {preview && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="inline-flex items-center gap-1 hover:text-foreground py-1">
+          {expanded ? "접기" : isSummary ? "요약 펼치기" : "소개 펼치기"}
+          <ChevronDown className={`h-3 w-3 ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
+        </button>}
+        {originalUrl && <a href={originalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground py-1">
+          원본보기<ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only"> (새 탭에서 열기)</span>
+        </a>}
+        {onSendEmail && <button type="button" onClick={() => onSendEmail(id)} aria-label={`${text.title} 이메일로 발송`} className="inline-flex items-center gap-1 hover:text-foreground py-1">
+          <Mail className="h-3.5 w-3.5" aria-hidden="true" />이메일
+        </button>}
+      </div>
+    </article>
   )
 }

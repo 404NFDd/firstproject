@@ -1,17 +1,11 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import { AppProviders } from "@/components/app-providers"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
-
 export const metadata: Metadata = {
-  title: "NewsHub - 뉴스 대시보드",
-  description: "최신 뉴스를 한 곳에서 모아보세요",
-  generator: "v0.app",
+  title: "NewsHub - 개발자를 위한 IT 뉴스",
+  description: "IT·과학 뉴스와 기술 산업의 흐름을 읽고, 기사 원문과 공식 기술 소식을 함께 확인하세요.",
   icons: {
     icon: [
       {
@@ -34,9 +28,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: "#0f1419",
-  userScalable: false,
 }
 
 export default function RootLayout({
@@ -48,7 +40,6 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <AppProviders>{children}</AppProviders>
-        <Analytics />
       </body>
     </html>
   )

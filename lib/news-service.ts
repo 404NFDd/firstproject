@@ -1,7 +1,18 @@
-import type { Prisma } from "@prisma/client"
+import type { CollectionReport } from "@/lib/collection-report"
+import { getArticleContent } from "@/lib/article-content"
+import { getListTranslations, enqueueArticleTranslation, PUBLISHED_TRANSLATION_FILTER } from "@/lib/news-translation"
+import { CURATION_KIND, isCurationArticle } from "@/lib/news-curation"
+import { NEWS_SYNC_TIMEOUT_MS, NEWS_SYNC_PERSIST_TIMEOUT_MS } from "@/lib/news-sync"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+import { newsQuerySchema, newsSyncSchema } from "@/lib/news-validation"
+import { decodeHtmlEntities } from "@/lib/text"
+import { fetchSpecialNews } from "@/lib/naver-special-news"
+import { fetchTechFeeds } from "@/lib/feed-news"
+import { TECH_FEED_SOURCES, EXCLUDED_COMMUNITY_SOURCES } from "@/lib/feed-sources"
+import { TECH_NEWS_CATEGORY_VALUES, getNewsCategoryLabel } from "@/lib/news-categories"
 
-export const SUPPORTED_NEWS_CATEGORIES = [
+const NAVER_NEWS_CATEGORIES = [
   // 네이버 뉴스 섹션 번호(표준 카테고리 8개)
   "100", // 정치
   "101", // 경제
@@ -13,18 +24,19 @@ export const SUPPORTED_NEWS_CATEGORIES = [
   "107", // 스포츠
 ] as const
 
+type NaverNewsCategory = (typeof NAVER_NEWS_CATEGORIES)[number]
+type TechNewsCategory = (typeof TECH_NEWS_CATEGORY_VALUES)[number]
+export const SUPPORTED_NEWS_CATEGORIES = [...NAVER_NEWS_CATEGORIES, ...TECH_NEWS_CATEGORY_VALUES] as const
 type NewsCategory = (typeof SUPPORTED_NEWS_CATEGORIES)[number]
 
 // 네이버 뉴스 섹션 URL 매핑 (HTML 크롤링용)
-const NAVER_SECTION_URLS: Partial<Record<NewsCategory, string>> = {
+const NAVER_SECTION_URLS: Partial<Record<NaverNewsCategory, string>> = {
   "100": "https://news.naver.com/section/100",
   "101": "https://news.naver.com/section/101",
   "102": "https://news.naver.com/section/102",
   "103": "https://news.naver.com/section/103",
   "104": "https://news.naver.com/section/104",
   "105": "https://news.naver.com/section/105",
-  "106": "https://news.naver.com/section/106",
-  "107": "https://news.naver.com/section/107",
 }
 
 const CATEGORY_PRIORITY_WEIGHT: Record<string, number> = {
@@ -36,6 +48,11 @@ const CATEGORY_PRIORITY_WEIGHT: Record<string, number> = {
   "105": 8, // IT·과학
   "106": 5, // 연예
   "107": 5, // 스포츠
+  developer: 8,
+  engineering: 8,
+  ai: 8,
+  infrastructure: 8,
+  release: 8,
 }
 
 type NormalizedArticle = {
@@ -64,15 +81,41 @@ export type NewsIngestResult = {
   fetched: number
   persisted: number
   skipped: number
+  failedCategories: NaverNewsCategory[]
+  failedSources: string[]
+  createdCount: number
+  repairedCount: number
+  excludedCount: number
+  durationMs: number
+  sourceReports: CollectionReport[]
 }
 
-const DEFAULT_QUERY: Required<Pick<NewsQuery, "limit" | "page" | "sort">> = {
-  page: 1,
-  limit: 12,
-  sort: "latest",
+export class NewsCollectionError extends Error {
+  constructor(message: string, readonly result: NewsIngestResult) { super(message) }
 }
 
 const sanitizeString = (value?: string | null) => value?.trim() || undefined
+
+function normalizeArticleUrl(href: string): string | undefined {
+  try {
+    const url = new URL(decodeHtmlEntities(href), "https://news.naver.com")
+    if (url.protocol !== "https:") return undefined
+    if (["news.naver.com", "n.news.naver.com"].includes(url.hostname)) {
+      const ids = url.pathname.match(/^\/(?:mnews\/)?article\/(\d+)\/(\d+)\/?$/)
+      const legacy = /^\/main\/read\.(?:naver|nhn)$/.test(url.pathname)
+      const oid = ids?.[1] ?? (legacy ? url.searchParams.get("oid") : null)
+      const aid = ids?.[2] ?? (legacy ? url.searchParams.get("aid") : null)
+      if (!oid || !aid || !/^\d+$/.test(oid) || !/^\d+$/.test(aid)) return undefined
+      return `https://n.news.naver.com/mnews/article/${oid}/${aid}`
+    }
+    if (["m.entertain.naver.com", "m.sports.naver.com"].includes(url.hostname) && /^\/article\/\d+\/\d+\/?$/.test(url.pathname)) {
+      url.search = ""
+      url.hash = ""
+      return url.href
+    }
+  } catch { /* 올바르지 않은 기사 링크는 제외한다. */ }
+  return undefined
+}
 
 
 // HTML 태그 제거 및 텍스트만 추출 (개행 보존 옵션)
@@ -82,7 +125,7 @@ const sanitizeString = (value?: string | null) => value?.trim() || undefined
 const stripHtmlTags = (html?: string | null, preserveNewlines = false): string | undefined => {
   if (!html) return undefined
 
-  let text = html
+  let text = html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
 
   // HTML 블록 태그를 개행으로 변환 (개행 보존 모드일 때)
   if (preserveNewlines) {
@@ -102,19 +145,7 @@ const stripHtmlTags = (html?: string | null, preserveNewlines = false): string |
   // HTML 태그 제거
   text = text.replace(/<[^>]*>/g, "")
 
-  // HTML 엔티티 디코딩 (순서 중요: &amp;를 먼저 처리해야 함)
-  text = text
-    .replace(/&amp;/g, "&")  // 먼저 처리
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#10;/g, "\n")  // 개행 엔티티
-    .replace(/&#13;/g, "\r")  // 캐리지 리턴
+  text = decodeHtmlEntities(text)
 
   if (preserveNewlines) {
     // 개행 보존 모드: 연속된 공백만 정리 (개행은 유지)
@@ -144,11 +175,11 @@ const calculatePriority = (article: Omit<NormalizedArticle, "priority">): number
 
 // 중복 기사 제거
 // Input: 기사 배열
-// Output: sourceUrl(없으면 title) 기준으로 dedupe된 배열
+// Output: 원문 URL(없으면 제목·출처) 기준으로 dedupe된 배열
 const dedupeArticles = (articles: NormalizedArticle[]): NormalizedArticle[] => {
   const seen = new Map<string, NormalizedArticle>()
   for (const article of articles) {
-    const key = article.sourceUrl ?? article.title
+    const key = article.sourceUrl ?? JSON.stringify([article.title, article.source])
     if (!seen.has(key)) {
       seen.set(key, article)
     }
@@ -156,29 +187,39 @@ const dedupeArticles = (articles: NormalizedArticle[]): NormalizedArticle[] => {
   return Array.from(seen.values())
 }
 
-async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
-  try {
+async function fetchHtml(url: string, timeoutMs = 8000, signal?: AbortSignal): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    signal?.throwIfAborted()
+    try {
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(timeoutMs),
+      cache: "no-store",
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
     })
 
     if (!response.ok) {
-      return null
+      await response.body?.cancel()
+      if (response.status !== 429 && response.status < 500) return null
+      if (attempt === 2) return null
+      console.warn(`[news-fetch] ${new URL(url).host} HTTP ${response.status}, 재시도 ${attempt + 1}/2`)
+    } else {
+      return await response.text()
     }
-
-    return await response.text()
-  } catch {
-    return null
+    } catch {
+      signal?.throwIfAborted()
+      if (attempt === 2) return null
+      console.warn(`[news-fetch] ${new URL(url).host} 네트워크 오류, 재시도 ${attempt + 1}/2`)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300 * 3 ** attempt))
   }
+  return null
 }
 
 // 네이버 섹션 HTML 요청 래퍼
-async function fetchNaverSectionHtml(url: string): Promise<string | null> {
-  const html = await fetchHtml(url)
+async function fetchNaverSectionHtml(url: string, signal?: AbortSignal): Promise<string | null> {
+  const html = await fetchHtml(url, 8000, signal)
   if (!html) {
     console.warn(`⚠️  네이버 뉴스 HTML 요청 실패 (${url})`)
   }
@@ -186,14 +227,14 @@ async function fetchNaverSectionHtml(url: string): Promise<string | null> {
 }
 
 function extractMetaContent(html: string, key: string): string | undefined {
-  // property="og:image" content="..."
-  const propRe = new RegExp(`<meta\\s+[^>]*property=["']${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`, "i")
-  const nameRe = new RegExp(`<meta\\s+[^>]*name=["']${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`, "i")
-  const tag = html.match(propRe)?.[0] ?? html.match(nameRe)?.[0]
-  if (!tag) return undefined
-
-  const content = tag.match(/content=["']([^"']+)["']/i)?.[1]
-  return content ? content.trim() : undefined
+  const tags = html.match(/<meta\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/gi) ?? []
+  for (const tag of tags) {
+    const name = tag.match(/\s(?:property|name)\s*=\s*(["'])(.*?)\1/i)?.[2]
+    if (name?.toLowerCase() !== key.toLowerCase()) continue
+    const content = tag.match(/\scontent\s*=\s*(["'])([\s\S]*?)\1/i)?.[2]
+    return content?.trim() || undefined
+  }
+  return undefined
 }
 
 function extractFirstMatch(html: string, patterns: RegExp[]): string | undefined {
@@ -238,15 +279,16 @@ function extractDivById(html: string, id: string): string | undefined {
 // 네이버 기사 상세 크롤링
 // Input: sourceUrl(개별 기사 URL)
 // Output: 이미지/요약/본문/작성자/발행시각 보강 데이터
-async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
+async function fetchNaverArticleDetails(sourceUrl: string, signal?: AbortSignal): Promise<{
   imageUrl?: string
   description?: string
   content?: string
   author?: string
   publishedAt?: Date
+  failed: boolean
 }> {
-  const html = await fetchHtml(sourceUrl, 9000)
-  if (!html) return {}
+  const html = await fetchHtml(sourceUrl, 9000, signal)
+  if (!html) return { failed: true }
 
   const baseUrl = (() => {
     try {
@@ -258,12 +300,11 @@ async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
 
   const resolveUrl = (value?: string) => {
     if (!value) return undefined
-    if (value.startsWith("http://") || value.startsWith("https://")) return value
-    if (!baseUrl) return value
     try {
-      return new URL(value, baseUrl.origin).href
+      const url = new URL(decodeHtmlEntities(value), baseUrl?.href)
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined
     } catch {
-      return value
+      return undefined
     }
   }
 
@@ -275,11 +316,11 @@ async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
     extractMetaContent(html, "article:published_time") ??
     extractMetaContent(html, "og:article:published_time") ??
     extractMetaContent(html, "og:published_time")
-  const publishedAt = publishedTimeRaw ? new Date(publishedTimeRaw) : undefined
+  const publishedAt = (publishedTimeRaw ? parseNaverPublishedAt(`<time datetime="${publishedTimeRaw.replace(" ", "T")}"></time>`) : null) ?? parseNaverPublishedAt(html)
 
-  const author =
-    extractMetaContent(html, "author") ??
-    extractMetaContent(html, "dable:author")
+  const author = stripHtmlTags(
+    extractMetaContent(html, "author") ?? extractMetaContent(html, "dable:author"),
+  )
 
   // 본문: 네이버 뉴스 기사 페이지에서 흔히 쓰는 컨테이너 우선 탐색
   const bodyContainerHtml =
@@ -295,9 +336,9 @@ async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
 
   const content = stripHtmlTags(bodyContainerHtml, true)
 
+  const metaDescription = extractMetaContent(html, "og:description") ?? extractMetaContent(html, "description")
   const description =
-    stripHtmlTags(extractMetaContent(html, "og:description"), false) ??
-    stripHtmlTags(extractMetaContent(html, "description"), false) ??
+    sanitizeString(decodeHtmlEntities(metaDescription).replace(/\s+/g, " ")) ??
     (content ? content.split("\n").join(" ").slice(0, 180) : undefined)
 
   return {
@@ -306,6 +347,7 @@ async function fetchNaverArticleDetails(sourceUrl: string): Promise<{
     content,
     author,
     publishedAt: publishedAt && !Number.isNaN(publishedAt.getTime()) ? publishedAt : undefined,
+    failed: !content,
   }
 }
 
@@ -333,90 +375,40 @@ async function mapWithConcurrency<T, R>(
   return results
 }
 
-// 한국어 시각 문자열 파서
-// Input: "2026.03.18. 오전 10:20" 형태의 문자열
-// Output: UTC Date 객체(파싱 실패 시 null)
-function parseKoreanDateTime(text: string): Date | null {
-  // Examples:
-  // - 2026.03.18. 오전 10:20
-  // - 2026.03.18. 오후 3:05
-  // - 2026.03.18. 15:05
-  const normalized = text.replace(/\s+/g, " ").trim()
-  const m = normalized.match(
-    /(\d{4})\.(\d{2})\.(\d{2})\.\s*(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::(\d{2}))?/,
-  )
-  if (!m) return null
-
-  const year = Number(m[1])
-  const month = Number(m[2])
-  const day = Number(m[3])
-  let hour = Number(m[5])
-  const minute = Number(m[6])
-  const second = Number(m[7] ?? "0")
-
-  if ([year, month, day, hour, minute, second].some((n) => Number.isNaN(n))) return null
-
-  const ampm = m[4]
-  if (ampm === "오전") {
-    if (hour === 12) hour = 0
-  } else if (ampm === "오후") {
-    if (hour < 12) hour += 12
-  }
-
-  // Treat parsed time as Asia/Seoul (UTC+9) then convert to UTC Date.
-  const utcMillis = Date.UTC(year, month - 1, day, hour - 9, minute, second)
-  const dObj = new Date(utcMillis)
-  return Number.isNaN(dObj.getTime()) ? null : dObj
+// 발행시각은 한국 시각으로 읽으며 잘못된 날짜의 자동 보정은 허용하지 않는다.
+function koreanDate(year: number, month: number, day: number, hour: number, minute: number, second: number): Date | null {
+  if (year < 100 || month < 1 || month > 12 || day < 1 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) return null
+  const local = new Date(Date.UTC(year, month - 1, day, hour, minute, second))
+  if (local.getUTCFullYear() !== year || local.getUTCMonth() !== month - 1 || local.getUTCDate() !== day) return null
+  return new Date(local.getTime() - 9 * 60 * 60 * 1000)
 }
 
-// 네이버 리스트/본문 문맥에서 발행시각 추출
-// Input: 앵커 주변 HTML 조각
-// Output: 파싱된 Date 또는 null
 function parseNaverPublishedAt(contextHtml: string): Date | null {
-  // 1) data-date-time="2026-03-18 10:20:00" (common on list items)
-  const dataDateTime = contextHtml.match(/data-date-time=["'](\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)["']/i)
-  if (dataDateTime?.[1]) {
-    const raw = dataDateTime[1].replace(" ", "T")
-    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/)
-    if (m) {
-      const year = Number(m[1])
-      const month = Number(m[2])
-      const day = Number(m[3])
-      const hour = Number(m[4])
-      const minute = Number(m[5])
-      const second = Number(m[6] ?? "0")
-      const utcMillis = Date.UTC(year, month - 1, day, hour - 9, minute, second)
-      const dt = new Date(utcMillis)
-      if (!Number.isNaN(dt.getTime())) return dt
+  const attribute = contextHtml.match(/(?:data-date-time|datetime)=["'](\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)["']/i)
+  if (attribute) {
+    const raw = attribute[1].replace(" ", "T")
+    const parts = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/)
+    if (parts && koreanDate(Number(parts[1]), Number(parts[2]), Number(parts[3]), Number(parts[4]), Number(parts[5]), Number(parts[6] ?? 0))) {
+      const date = new Date(/(?:Z|[+-]\d{2}:\d{2})$/i.test(raw) ? raw : `${raw}+09:00`)
+      if (!Number.isNaN(date.getTime())) return date
     }
   }
-
-  // 2) datetime="2026-03-18T10:20:00+09:00" or "2026-03-18T10:20:00"
-  const datetimeAttr = contextHtml.match(
-    /datetime=["'](\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)["']/i,
-  )
-  if (datetimeAttr?.[1]) {
-    const dt = new Date(datetimeAttr[1])
-    if (!Number.isNaN(dt.getTime())) return dt
+  const visible = contextHtml.match(/(\d{4})\.(\d{1,2})\.(\d{1,2})\.\s*(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+  if (!visible) return null
+  let hour = Number(visible[5])
+  if (visible[4]) {
+    if (hour < 1 || hour > 12) return null
+    hour = hour % 12 + (visible[4] === "오후" ? 12 : 0)
   }
-
-  // 3) Visible Korean timestamp text
-  // Try to find a nearby datetime-like text block.
-  const koreanTextMatch = contextHtml.match(/(\d{4}\.\d{2}\.\d{2}\.\s*(?:오전|오후)?\s*\d{1,2}:\d{2}(?::\d{2})?)/)
-  if (koreanTextMatch?.[1]) {
-    const dt = parseKoreanDateTime(koreanTextMatch[1])
-    if (dt) return dt
-  }
-
-  return null
+  return koreanDate(Number(visible[1]), Number(visible[2]), Number(visible[3]), hour, Number(visible[6]), Number(visible[7] ?? 0))
 }
 
 // 네이버 뉴스 HTML에서 기사 정보 추출
 // 섹션 HTML에서 기사 목록 파싱
 // Input: 네이버 섹션 HTML, 카테고리 코드
 // Output: 우선순위 계산 전 기사 배열
-function parseNaverNewsHtml(html: string, category: NewsCategory): Omit<NormalizedArticle, "priority">[] {
-  const articles: Omit<NormalizedArticle, "priority">[] = []
+function parseNaverNewsHtml(html: string, category: NaverNewsCategory): Array<Omit<NormalizedArticle, "priority" | "publishedAt"> & { publishedAt?: Date }> {
+  const articles: Array<Omit<NormalizedArticle, "priority" | "publishedAt"> & { publishedAt?: Date }> = []
 
   // 대표적인 네이버 뉴스 리스트 패턴들에 대응하기 위한 단순 파서
   // - 메인/섹션: <a ... class="cluster_text_headline" ... href="...">제목</a>
@@ -445,26 +437,19 @@ function parseNaverNewsHtml(html: string, category: NewsCategory): Omit<Normaliz
 
     if (!href || !title) continue
 
-    let sourceUrl: string | undefined
-    try {
-      // 상대 경로일 경우 네이버 도메인 기준으로 변환
-      if (href.startsWith("http://") || href.startsWith("https://")) {
-        sourceUrl = href
-      } else {
-        sourceUrl = new URL(href, "https://news.naver.com").href
-      }
-    } catch {
-      continue
-    }
+    const sourceUrl = normalizeArticleUrl(href)
+    if (!sourceUrl) continue
 
-    const source = "네이버 뉴스"
-    const contextStart = Math.max(0, match.index)
-    const contextEnd = Math.min(html.length, contextStart + 2000)
-    const contextHtml = html.slice(contextStart, contextEnd)
+    // 다른 기사의 날짜가 섞이지 않도록 해당 목록 항목 안에서만 읽는다.
+    const itemStart = html.lastIndexOf("<li", match.index)
+    const previousItemEnd = html.lastIndexOf("</li>", match.index)
+    const itemEnd = html.indexOf("</li>", anchorPattern.lastIndex)
+    const contextHtml = itemStart > previousItemEnd && itemEnd >= 0
+      ? html.slice(itemStart, itemEnd + 5) : match[0]
+    const source = stripHtmlTags(extractFirstMatch(contextHtml, [/<div[^>]+class=["'][^"']*sa_text_press[^"']*["'][^>]*>([\s\S]*?)<\/div>/i])) ?? "네이버 뉴스"
 
-    // HTML에서 발행일을 찾지 못하면, 전부 같은 값이 되지 않도록 약간씩 과거로 분산
-    const fallbackPublishedAt = new Date(Date.now() - articles.length * 60_000)
-    const publishedAt = parseNaverPublishedAt(contextHtml) ?? fallbackPublishedAt
+    // 목록에서 확인하지 못한 발행시각은 상세 원문에서 다시 확인한다.
+    const publishedAt = parseNaverPublishedAt(contextHtml) ?? undefined
 
     articles.push({
       title,
@@ -487,21 +472,56 @@ function parseNaverNewsHtml(html: string, category: NewsCategory): Omit<Normaliz
 // Input: categories, limitPerCategory
 // Output: 우선순위가 계산된 기사 배열
 async function fetchNewsFromNaverHtml(options: {
-  categories: NewsCategory[]
+  categories: NaverNewsCategory[]
   limitPerCategory?: number
-}): Promise<NormalizedArticle[]> {
+  signal?: AbortSignal
+}): Promise<{ articles: NormalizedArticle[]; failedCategories: NaverNewsCategory[]; sourceReports: CollectionReport[] }> {
   const limitPerCategory = options.limitPerCategory ?? 20
   const aggregated: NormalizedArticle[] = []
+  const failedCategories: NaverNewsCategory[] = []
+  const sourceReports: CollectionReport[] = []
+  const detailsCache = new Map<string, ReturnType<typeof fetchNaverArticleDetails>>()
 
-  const fetchAndEnrich = async (sectionUrl: string, baseCategory: NewsCategory) => {
-    const html = await fetchNaverSectionHtml(sectionUrl)
-    if (!html) return
+  const fetchAndEnrich = async (sectionUrl: string, baseCategory: NaverNewsCategory, report: CollectionReport) => {
+    const html = await fetchNaverSectionHtml(sectionUrl, options.signal)
+    if (!html) {
+      failedCategories.push(baseCategory)
+      report.error = "목록 응답을 읽을 수 없습니다."
+      report.reasons.source_error = 1
+      return
+    }
 
-    const baseArticles = parseNaverNewsHtml(html, baseCategory).slice(0, limitPerCategory)
+    const seenUrls = new Set<string>()
+    const parsed = parseNaverNewsHtml(html, baseCategory)
+    report.received = parsed.length
+    const unique = parsed.filter((article) => {
+      if (seenUrls.has(article.sourceUrl!)) {
+        report.excluded++
+        report.reasons.duplicate_url = (report.reasons.duplicate_url || 0) + 1
+        return false
+      }
+      seenUrls.add(article.sourceUrl!)
+      return true
+    })
+    const baseArticles = unique.slice(0, limitPerCategory)
+    report.limited = unique.length - baseArticles.length
+    if (baseArticles.length === 0) failedCategories.push(baseCategory)
     const enriched = await mapWithConcurrency(baseArticles, 4, async (base, idx) => {
-      const details = base.sourceUrl ? await fetchNaverArticleDetails(base.sourceUrl) : {}
+      const url = base.sourceUrl!
+      if (!detailsCache.has(url)) detailsCache.set(url, fetchNaverArticleDetails(url, options.signal))
+      const details = await detailsCache.get(url)!.catch((): Awaited<ReturnType<typeof fetchNaverArticleDetails>> => ({ failed: true }))
+      if (!details.content) report.missingContent++
+      if (details.failed && !failedCategories.includes(baseCategory)) failedCategories.push(baseCategory)
       if (idx > 0) {
         await new Promise((resolve) => setTimeout(resolve, 150))
+      }
+
+      const publishedAt = details.publishedAt ?? base.publishedAt
+      if (!publishedAt) {
+        report.excluded++
+        report.reasons.invalid_date = (report.reasons.invalid_date || 0) + 1
+        if (!failedCategories.includes(baseCategory)) failedCategories.push(baseCategory)
+        return null
       }
 
       const merged: Omit<NormalizedArticle, "priority"> = {
@@ -510,7 +530,7 @@ async function fetchNewsFromNaverHtml(options: {
         description: details.description ?? base.description,
         content: details.content ?? base.content,
         author: details.author ?? base.author,
-        publishedAt: details.publishedAt ?? base.publishedAt,
+        publishedAt,
       }
 
       return {
@@ -520,49 +540,90 @@ async function fetchNewsFromNaverHtml(options: {
       }
     })
 
-    aggregated.push(...enriched)
+    aggregated.push(...enriched.filter((article) => article !== null))
   }
 
   for (let i = 0; i < options.categories.length; i++) {
     const category = options.categories[i]
-    const sectionUrl = NAVER_SECTION_URLS[category]
-    if (!sectionUrl) continue
-
-    if (i > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 700))
+    const started = Date.now()
+    const previousCount = aggregated.length
+    const report: CollectionReport = {
+      id: "naver-" + category, name: "네이버 " + getNewsCategoryLabel(category), status: "success", received: 0,
+      accepted: 0, excluded: 0, limited: 0, missingContent: 0, reasons: {}, durationMs: 0,
     }
-
-    await fetchAndEnrich(sectionUrl, category)
+    try {
+      options.signal?.throwIfAborted()
+      if (i > 0) await new Promise((resolve) => setTimeout(resolve, 700))
+      if (category === "106" || category === "107") {
+        const result = await fetchSpecialNews(category, limitPerCategory, options.signal)
+        report.received = result.received
+        report.excluded = result.excluded
+        report.limited = result.limited
+        report.reasons = result.reasons
+        report.missingContent = result.articles.filter((article) => !article.content).length
+        if (result.partial || !result.articles.length) failedCategories.push(category)
+        aggregated.push(...result.articles.map((article) => ({ ...article, priority: calculatePriority(article) })))
+      } else {
+        const sectionUrl = NAVER_SECTION_URLS[category]
+        if (sectionUrl) await fetchAndEnrich(sectionUrl, category, report)
+      }
+    } catch {
+      if (!failedCategories.includes(category)) failedCategories.push(category)
+      report.error = options.signal?.aborted ? "수집 시간 제한을 초과했습니다." : "목록 또는 본문 수집에 실패했습니다."
+      report.reasons[options.signal?.aborted ? "timeout" : "source_error"] = 1
+    }
+    if (options.signal?.aborted) {
+      if (!failedCategories.includes(category)) failedCategories.push(category)
+      report.error = "수집 시간 제한을 초과했습니다."
+      report.reasons.timeout = 1
+    }
+    report.accepted = aggregated.length - previousCount
+    report.status = !report.accepted ? "failed" : failedCategories.includes(category) || report.excluded ? "partial" : "success"
+    report.durationMs = Date.now() - started
+    sourceReports.push(report)
   }
-
-  return aggregated
+  return { articles: aggregated, failedCategories, sourceReports }
 }
 
 // DB 저장 단계
 // Input: 정규화된 기사 배열
 // Output: fetched/persisted/skipped 집계 결과
-async function persistArticles(articles: NormalizedArticle[]): Promise<NewsIngestResult> {
-  let persisted = 0
-  let skipped = 0
+async function persistArticles(articles: NormalizedArticle[], counts: { fetched: number; persisted: number; skipped: number; createdCount: number; repairedCount: number }, signal: AbortSignal) {
 
   for (const article of articles) {
-    const uniqueFilters: Prisma.NewsWhereInput[] = []
-    if (article.sourceUrl) {
-      uniqueFilters.push({ sourceUrl: article.sourceUrl })
-    }
-    uniqueFilters.push({ title: article.title })
-
+    signal.throwIfAborted()
+    const identity: Prisma.NewsWhereInput = article.sourceUrl
+      ? { sourceUrl: article.sourceUrl } : { title: article.title, source: article.source }
     const existing = await prisma.news.findFirst({
-      where: { OR: uniqueFilters },
-      select: { id: true },
+      where: identity,
+      select: { id: true, title: true, source: true, sourceUrl: true, content: true, description: true, imageUrl: true, author: true, category: true },
     })
 
     if (existing) {
-      skipped += 1
+      // 상세 수집 실패로 남은 빈 본문만 복구하며 기존 기사 내용은 보존한다.
+      if (existing.sourceUrl === article.sourceUrl && !existing.content?.trim() && article.content?.trim()) {
+        await prisma.news.update({
+          where: { id: existing.id },
+          data: {
+            content: article.content,
+            description: existing.description || article.description,
+            imageUrl: existing.imageUrl || article.imageUrl,
+            author: existing.author || article.author,
+          },
+        })
+        counts.persisted++
+        counts.repairedCount++
+        await enqueueArticleTranslation({ ...article, id: existing.id, title: existing.title || article.title,
+          description: existing.description || article.description })
+      } else {
+        counts.skipped++
+        await enqueueArticleTranslation({ id: existing.id, title: existing.title || article.title,
+          source: existing.source || article.source, description: existing.description, content: existing.content, category: existing.category || article.category })
+      }
       continue
     }
 
-    await prisma.news.create({
+    const created = await prisma.news.create({
       data: {
         title: article.title,
         description: article.description,
@@ -576,28 +637,75 @@ async function persistArticles(articles: NormalizedArticle[]): Promise<NewsInges
         priority: article.priority,
       },
     })
-    persisted += 1
+    counts.persisted++
+    counts.createdCount++
+    await enqueueArticleTranslation({ ...article, id: created.id })
   }
 
-  return { fetched: articles.length, persisted, skipped }
+  return counts
 }
 
 // 최신 뉴스 수집 진입점
 // Input: 수집 카테고리/카테고리당 최대 수량
 // Output: 저장 결과 집계
 export async function ingestLatestNews(options?: {
+  scope?: "tech" | "all"
   categories?: NewsCategory[]
   limitPerCategory?: number
-}): Promise<NewsIngestResult> {
-  const categories =
-    options?.categories && options.categories.length > 0
-      ? options.categories
-      : [...SUPPORTED_NEWS_CATEGORIES]
-  const limitPerCategory = options?.limitPerCategory ?? 20
+}, signal = AbortSignal.timeout(NEWS_SYNC_TIMEOUT_MS)): Promise<NewsIngestResult> {
+  const started = Date.now()
+  const validated = newsSyncSchema.parse(options ?? {})
+  const categories = [...new Set(validated.categories ?? (validated.scope === "all"
+    ? SUPPORTED_NEWS_CATEGORIES : ["105", ...TECH_NEWS_CATEGORY_VALUES]))]
+  const limitPerCategory = validated.limitPerCategory ?? 20
+  const naverCategories = categories.filter((category): category is NaverNewsCategory => NAVER_NEWS_CATEGORIES.includes(category as NaverNewsCategory))
+  const techCategories = categories.filter((category): category is TechNewsCategory => TECH_NEWS_CATEGORY_VALUES.includes(category as TechNewsCategory))
 
-  const naverArticles = await fetchNewsFromNaverHtml({ categories, limitPerCategory })
-  const deduped = dedupeArticles(naverArticles)
-  return persistArticles(deduped)
+  // 각 수집기를 격리해 한쪽이 실패해도 다른 소스에서 확인한 기사는 저장합니다.
+  // 기술 피드는 카테고리별 제한값을 각 소스의 최대 항목 수로 사용합니다.
+  const [naver, feeds] = await Promise.allSettled([
+    fetchNewsFromNaverHtml({ categories: naverCategories, limitPerCategory, signal }),
+    techCategories.length ? fetchTechFeeds({ categories: techCategories, limitPerSource: limitPerCategory, signal })
+      : Promise.resolve({ articles: [], failedSources: [], sourceReports: [] }),
+  ])
+  const naverArticles = naver.status === "fulfilled" ? naver.value.articles : []
+  const failedCategories = naver.status === "fulfilled" ? naver.value.failedCategories : naverCategories
+  const feedArticles = feeds.status === "fulfilled" ? feeds.value.articles : []
+  const failedSources = feeds.status === "fulfilled" ? feeds.value.failedSources
+    : TECH_FEED_SOURCES.filter((source) => techCategories.includes(source.category)).map((source) => source.id)
+  if (naver.status === "rejected") console.warn("네이버 수집기 실패:", naver.reason)
+  if (feeds.status === "rejected") console.warn("기술 피드 수집기 실패:", feeds.reason)
+
+  const sourceReports = [
+    ...(naver.status === "fulfilled" ? naver.value.sourceReports : []),
+    ...(feeds.status === "fulfilled" ? feeds.value.sourceReports : []),
+  ]
+  const articles = dedupeArticles([...naverArticles, ...feedArticles.map((article) => ({ ...article, priority: calculatePriority(article) }))])
+  const counts = { fetched: articles.length, persisted: 0, skipped: 0, createdCount: 0, repairedCount: 0 }
+  const result = (): NewsIngestResult => ({
+    ...counts, failedCategories, failedSources, sourceReports,
+    excludedCount: sourceReports.reduce((sum, report) => sum + report.excluded, 0),
+    durationMs: Date.now() - started,
+  })
+  if (!articles.length) {
+    throw new NewsCollectionError(`수집된 뉴스가 없습니다. 뉴스 소스와 피드 응답을 확인해주세요. 카테고리: ${failedCategories.join(", ")}; 소스: ${failedSources.join(", ")}`, result())
+  }
+  // 느린 출처가 전체 수집 제한에 걸려도 이미 확인한 다른 출처 기사는 저장합니다.
+  // 요청의 5분 실행 한도 안에서 저장 단계에 최대 30초의 여유를 남깁니다.
+  const persistenceSignal = AbortSignal.timeout(Math.max(1, started + NEWS_SYNC_TIMEOUT_MS + NEWS_SYNC_PERSIST_TIMEOUT_MS - Date.now()))
+  try {
+    await persistArticles(articles, counts, persistenceSignal)
+  } catch {
+    const unprocessed = articles.length - counts.persisted - counts.skipped
+    sourceReports.push({
+      id: "persistence", name: "기사 저장", status: "failed", received: articles.length,
+      accepted: counts.persisted + counts.skipped, excluded: unprocessed, limited: 0,
+      missingContent: 0, reasons: { [persistenceSignal.aborted ? "timeout" : "database_error"]: unprocessed },
+      durationMs: Date.now() - started, error: persistenceSignal.aborted ? "저장 시간 제한을 초과했습니다." : "기사 저장에 실패했습니다.",
+    })
+    throw new NewsCollectionError("수집한 기사를 저장하는 중 오류가 발생했습니다.", result())
+  }
+  return result()
 }
 
 // 목록 조회 API용 서비스
@@ -605,40 +713,26 @@ export async function ingestLatestNews(options?: {
 // Output: 뉴스 배열 + pagination 메타데이터
 export async function getNews(query: NewsQuery = {}) {
   try {
-    const { page, limit, sort } = { ...DEFAULT_QUERY, ...query }
+    const { page, limit, sort, category, search, minPriority } = newsQuerySchema.parse(query)
     const skip = (page - 1) * limit
 
-    const where: Prisma.NewsWhereInput = {}
-    if (query.category && query.category !== "all") {
-      where.category = query.category
+    const where: Prisma.NewsWhereInput = { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_TRANSLATION_FILTER }
+    if (category === "tech") {
+      where.category = { in: ["105", ...TECH_NEWS_CATEGORY_VALUES] }
+    } else if (category && category !== "all") {
+      where.category = category
     }
-    if (query.search) {
-      const search = query.search
-      // PostgreSQL과 SQLite는 case-sensitive가 기본이므로 mode: "insensitive" 필요
-      // MySQL은 기본적으로 case-insensitive이므로 mode 옵션 불필요
-      const dbUrl = process.env.DATABASE_URL || ""
-      const isPostgreSQL = dbUrl.startsWith("postgresql://") || dbUrl.startsWith("postgres://")
-      const isSQLite = dbUrl.startsWith("file:") || dbUrl.startsWith("sqlite:")
-      const useInsensitive = isPostgreSQL || isSQLite
-
-      if (useInsensitive) {
-        // PostgreSQL/SQLite: case-insensitive 검색 필요
-        where.OR = [
-          { title: { contains: search, mode: "insensitive" } as Prisma.StringFilter<"News"> },
-          { description: { contains: search, mode: "insensitive" } as Prisma.StringNullableFilter<"News"> },
-          { content: { contains: search, mode: "insensitive" } as Prisma.StringNullableFilter<"News"> },
-        ]
-      } else {
-        // MySQL: 기본적으로 case-insensitive
-        where.OR = [
-          { title: { contains: search } },
-          { description: { contains: search } },
-          { content: { contains: search } },
-        ]
-      }
+    if (search) {
+      // 현재 스키마는 MySQL이며 검색의 대소문자 구분은 DB collation을 따른다.
+      where.OR = [
+        { title: { contains: search } },
+        { description: { contains: search } },
+        { content: { contains: search } },
+        { translations: { some: { kind: CURATION_KIND, status: "ready", translatedTitle: { contains: search } } } },
+      ]
     }
-    if (typeof query.minPriority === "number") {
-      where.priority = { gte: query.minPriority }
+    if (typeof minPriority === "number") {
+      where.priority = { gte: minPriority }
     }
 
     const orderBy: Prisma.NewsOrderByWithRelationInput[] = []
@@ -648,6 +742,7 @@ export async function getNews(query: NewsQuery = {}) {
       orderBy.push({ readHistory: { _count: "desc" } })
     }
     orderBy.push({ publishedAt: "desc" })
+    orderBy.push({ id: "desc" })
 
     const [news, total] = await Promise.all([
       prisma.news.findMany({
@@ -655,12 +750,34 @@ export async function getNews(query: NewsQuery = {}) {
         orderBy,
         skip,
         take: limit,
+        select: { id: true, title: true, description: true, imageUrl: true, sourceUrl: true,
+          source: true, author: true, publishedAt: true, category: true, priority: true },
       }),
       prisma.news.count({ where }),
     ])
 
+    // 페이지에 있는 기사만 제한된 본문 앞부분을 읽습니다. 전체 LongText는 목록으로 전송하지 않습니다.
+    const excerpts = news.length ? await prisma.$queryRaw<Array<{ id: string; excerpt: string | null }>>(
+      Prisma.sql`SELECT id, LEFT(content, 1200) AS excerpt FROM News WHERE id IN (${Prisma.join(news.map((article) => article.id))})`
+    ) : []
+    const byId = new Map(excerpts.map((row) => [row.id, row.excerpt]))
+    const translations = await getListTranslations(news.map((article) => ({ ...article, content: byId.get(article.id) })))
+    const cards = news.map(({ description, ...article }) => {
+      const text = getArticleContent({ title: article.title, description, content: byId.get(article.id) })
+      const firstParagraph = text.content.split(/\n\s*\n/)[0]
+      const translated = translations.get(article.id)
+      const excerpt = Array.from(translated?.preview ?? (text.description || firstParagraph))
+      return {
+        ...article,
+        title: translated?.title || article.title,
+        originalTitle: translated ? article.title : undefined,
+        isTranslated: Boolean(translated && !translated.isSummary),
+        preview: translated?.isSummary ? translated.preview : excerpt.slice(0, 300).join("") + (excerpt.length > 300 ? "…" : ""),
+        previewType: translated?.isSummary ? "summary" : translated ? "description" : text.description ? "description" : firstParagraph ? "content" : "none",
+      }
+    })
     return {
-      news,
+      news: cards,
       pagination: {
         total,
         page,
@@ -670,7 +787,7 @@ export async function getNews(query: NewsQuery = {}) {
     }
   } catch (error) {
     console.error("Error getting news:", error)
-    return { news: [], pagination: { total: 0, page: 1, limit: query.limit ?? DEFAULT_QUERY.limit, pages: 0 } }
+    throw error
   }
 }
 
@@ -679,12 +796,15 @@ export async function getNews(query: NewsQuery = {}) {
 // Output: 해당 뉴스(없거나 오류 시 null)
 export async function getNewsDetail(newsId: string) {
   try {
-    return await prisma.news.findUnique({
+    const news = await prisma.news.findUnique({
       where: { id: newsId },
       include: {
         readHistory: true,
       },
     })
+    if (!news || EXCLUDED_COMMUNITY_SOURCES.includes(news.source)) return null
+    if (isCurationArticle(news) && !(await getListTranslations([news])).has(news.id)) return null
+    return news
   } catch (error) {
     console.error("Error getting news detail:", error)
     return null

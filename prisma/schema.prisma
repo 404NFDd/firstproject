@@ -13,12 +13,15 @@ model User {
   email            String     @unique
   name             String?
   password         String
+  adminUsername    String?    @unique
+  isAdmin          Boolean    @default(false)
   image            String?
   emailSubscription Int       @default(0) // 0: 구독 안함, 1: 구독함
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   
   // 관계
+  briefingDeliveries BriefingDelivery[]
   refreshTokens RefreshToken[]
   newsReadHistory NewsReadHistory[]
   
@@ -57,6 +60,7 @@ model News {
   // 관계
   readHistory   NewsReadHistory[]
   summary       NewsSummary?
+  translations  NewsTranslation[]
   
   @@index([category])
   @@index([publishedAt])
@@ -100,8 +104,64 @@ model NewsSyncLog {
   persisted Int      @default(0)
   skipped   Int      @default(0)
   error     String?  @db.Text
+  createdCount Int @default(0)
+  repairedCount Int @default(0)
+  excludedCount Int @default(0)
+  durationMs Int @default(0)
+  sourceReports Json?
+  finishedAt DateTime?
   createdAt DateTime @default(now())
   
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+// 한국 날짜별 정기 브리핑 발송 상태. 테스트 메일은 이 기록에 포함하지 않습니다.
+model BriefingDelivery {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateKey String @db.VarChar(10)
+  status String @default("processing")
+  attempts Int @default(1)
+  startedAt DateTime @default(now())
+  sentAt DateTime?
+  messageId String? @db.Text
+  error String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dateKey])
+  @@index([dateKey, status])
+}
+
+
+// 원문 변경을 해시로 확인하고 전체 본문을 조각별로 이어서 번역합니다.
+model NewsTranslation {
+  id String @id @default(cuid())
+  newsId String
+  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  kind String
+  chunkIndex Int @default(0)
+  sourceHash String @db.VarChar(64)
+  status String @default("pending")
+  translatedTitle String? @db.LongText
+  translatedText String? @db.LongText
+  startedAt DateTime?
+  retryAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([newsId, kind, chunkIndex])
+}
+
+// 무료 프로젝트의 번역 요청만 집계합니다. 유료 프로젝트 여부는 계정에서 확인합니다.
+model NewsTranslationUsage {
+  dateKey String @db.VarChar(10)
+  model String @default("gemini-3.5-flash-lite") @db.VarChar(64)
+  requests Int @default(0)
+  nextRequestAt DateTime @default(now())
+  blockedUntil DateTime?
+
+  @@id([dateKey, model])
 }

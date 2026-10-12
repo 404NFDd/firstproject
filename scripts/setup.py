@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Dict, Iterable, List
 
 ROOT = Path(__file__).resolve().parents[1]
-ENV_FILE = ROOT / ".env.local"
-ENV_EXAMPLE = ROOT / ".env.local.example"
+ENV_FILE = ROOT / ".env"
+ENV_EXAMPLE = ROOT / ".env.example"
 
 REQUIRED_ENV_KEYS: List[str] = [
     "DATABASE_URL",
@@ -23,18 +23,18 @@ REQUIRED_ENV_KEYS: List[str] = [
     "NEXTAUTH_URL",
     "JWT_ACCESS_SECRET",
     "JWT_REFRESH_SECRET",
-    "NEWS_API_KEY",
 ]
 
 
 def copy_example_env(force: bool = False) -> bool:
-    """Copy `.env.local.example` to `.env.local` if needed."""
+    """Copy `.env.example` to `.env` if needed."""
     if not ENV_EXAMPLE.exists():
-        print("⚠️  .env.local.example 파일을 찾을 수 없습니다.", file=sys.stderr)
+        print("⚠️  .env.example 파일을 찾을 수 없습니다.", file=sys.stderr)
         return False
 
     if ENV_FILE.exists() and not force:
-        return False
+        print("기존 .env 파일을 유지합니다.")
+        return True
 
     shutil.copyfile(ENV_EXAMPLE, ENV_FILE)
     print(f"✅ {ENV_FILE.name} 파일을 생성했습니다.")
@@ -63,9 +63,9 @@ def missing_env_keys(keys: Iterable[str], values: Dict[str, str]) -> List[str]:
 
 
 def check_env_file() -> bool:
-    """Validate that `.env.local` contains required variables."""
+    """Validate that `.env` contains required variables."""
     if not ENV_FILE.exists():
-        print("❌ .env.local 파일이 없습니다. --bootstrap-env 옵션을 사용해 생성하세요.")
+        print("❌ .env 파일이 없습니다. --bootstrap-env 옵션을 사용해 생성하세요.")
         return False
 
     values = parse_env_file(ENV_FILE)
@@ -84,7 +84,7 @@ def summarize() -> None:
     """Print a quick summary of the repo bootstrap status."""
     print("📦 NewsHub 환경 점검")
     print(f" - Poetry 프로젝트 루트: {ROOT}")
-    print(f" - .env.local 상태: {'있음' if ENV_FILE.exists() else '없음'}")
+    print(f" - .env 상태: {'있음' if ENV_FILE.exists() else '없음'}")
     print(f" - 가상환경 경로: {ROOT / '.venv'} (Poetry in-project 설정 권장)")
 
 
@@ -95,12 +95,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--bootstrap-env",
         action="store_true",
-        help="필요 시 .env.local 파일을 생성합니다.",
+        help="필요 시 .env 파일을 생성합니다.",
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help=".env.local 이 이미 존재해도 예제를 덮어씁니다 (주의).",
+        help=".env 이 이미 존재해도 예제를 덮어씁니다 (주의).",
     )
     parser.add_argument(
         "--check-env",

@@ -64,8 +64,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       router.push("/")
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "인증 중 오류가 발생했습니다.")
     } finally {
       setLoading(false)
     }
@@ -97,15 +97,16 @@ export function AuthForm({ mode }: AuthFormProps) {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">이메일</label>
+          <label className="block text-sm font-medium text-foreground mb-2">{mode === "login" ? "이메일 또는 관리자 아이디" : "이메일"}</label>
           <input
-            type="email"
+            type={mode === "login" ? "text" : "email"}
+            autoComplete="username"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="이메일을 입력하세요"
+            placeholder={mode === "login" ? "이메일 또는 관리자 아이디" : "이메일을 입력하세요"}
           />
         </div>
 

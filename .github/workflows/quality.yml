@@ -1,0 +1,37 @@
+name: 프로젝트 검증
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/news_ci
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ci-only-nextauth-secret
+      JWT_ACCESS_SECRET: ci-only-access-secret
+      JWT_REFRESH_SECRET: ci-only-refresh-secret
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v7
+      - name: Node.js 설정
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: 의존성 설치
+        run: npm ci
+      - name: Prisma 클라이언트 생성과 스키마 검사
+        run: |
+          npx prisma generate
+          npx prisma validate
+      - name: 테스트, 타입, 린트, 빌드
+        run: npm run check

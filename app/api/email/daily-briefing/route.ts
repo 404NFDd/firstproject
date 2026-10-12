@@ -1,33 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sendDailyBriefing } from "@/lib/daily-briefing"
-
-function getRequestCronSecret(request: NextRequest): { value: string | null; source: string } {
-  const headerSecret = request.headers.get("x-cron-secret")
-  if (headerSecret) {
-    return { value: headerSecret, source: "x-cron-secret" }
-  }
-
-  const authorization = request.headers.get("authorization")
-  if (authorization?.startsWith("Bearer ")) {
-    return { value: authorization.slice("Bearer ".length).trim(), source: "authorization-bearer" }
-  }
-
-  return { value: null, source: "missing" }
-}
+import { isAuthorizedCron } from "@/lib/cron-auth"
 
 /**
  * 일일 브리핑 메일을 전송합니다 (Cron Job용)
  */
 export async function POST(request: NextRequest) {
-  // Cron Secret 인증 (선택사항)
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const { value, source } = getRequestCronSecret(request)
-    if (!value || value !== cronSecret) {
-      const reason = !value ? "missing-secret-header" : `secret-mismatch-via-${source}`
-      console.warn(`[daily-briefing] Unauthorized request: ${reason}`)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  if (!isAuthorizedCron(request.headers)) {
+    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
   }
 
   try {
@@ -35,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error || "일일 브리핑 전송에 실패했습니다." },
+        { ...result, error: result.error || "일일 브리핑 전송에 실패했습니다." },
         { status: 500 }
       )
     }
@@ -45,6 +25,8 @@ export async function POST(request: NextRequest) {
       sent: result.sent || 0,
       failed: result.failed || 0,
       total: result.total || 0,
+      skipped: result.skipped || 0,
+      uncertain: result.uncertain || 0,
       message: `${result.sent || 0}명에게 일일 브리핑이 전송되었습니다.`,
     })
   } catch (error) {
@@ -54,7 +36,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET 요청도 지원 (테스트용)
+ * 스케줄러의 GET 호출도 동일하게 인증한다.
  */
 export async function GET(request: NextRequest) {
   return POST(request)
