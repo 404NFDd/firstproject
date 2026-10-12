@@ -81,6 +81,13 @@ function Dashboard() {
       setLoadError(null)
       if (!append) setHasCheckedSync(false)
 
+      let timedOut = false
+      const timeout = setTimeout(() => {
+        if (controller.signal.aborted) return
+        timedOut = true
+        controller.abort()
+      }, 15_000)
+
       try {
         const params = new URLSearchParams(currentQuery)
         params.set("page", String(pageNum))
@@ -108,15 +115,18 @@ function Dashboard() {
         setHasMore(pageNum < totalPages && newArticles.length > 0)
         setPage(pageNum)
       } catch (error) {
-        if (controller.signal.aborted || activeQuery.current !== currentQuery) return
-        const message = error instanceof Error ? error.message : "뉴스를 불러올 수 없습니다."
+        if ((controller.signal.aborted && !timedOut) || activeQuery.current !== currentQuery || listRequest.current !== controller) return
+        const message = timedOut
+          ? "뉴스 조회 시간이 초과되었습니다. 다시 불러오기를 눌러주세요."
+          : error instanceof Error ? error.message : "뉴스를 불러올 수 없습니다."
         console.error("뉴스 조회 실패:", error)
         setLoadError({ message, page: pageNum, append })
         toast({ title: "오류", description: message, variant: "destructive" })
       } finally {
+        clearTimeout(timeout)
         if (listRequest.current === controller) {
           listRequest.current = null
-          if (!controller.signal.aborted) setLoading(false)
+          if (!controller.signal.aborted || timedOut) setLoading(false)
         }
       }
     },
