@@ -162,6 +162,8 @@ model NewsTranslationUsage {
   requests Int @default(0)
   nextRequestAt DateTime @default(now())
   blockedUntil DateTime?
+  // 기본 모델의 날짜별 행에 현재 사용 모델을 저장합니다. 새 날짜에는 기본 모델에서 시작합니다.
+  activeModel String? @db.VarChar(64)
 
   @@id([dateKey, model])
 }

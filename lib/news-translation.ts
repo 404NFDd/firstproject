@@ -45,6 +45,7 @@ export interface TranslationOperation {
   kind: Kind; chunkIndex: number
   outcome: "ready" | "rejected" | "failed" | "waiting"
   model: string | null; attempts: TranslationAttempt[]
+  modelSwitches: Array<{ from: string; to: string; reason: string }>
   reason?: string; retryAfterSeconds: number
 }
 interface TranslationStepView extends NewsTranslationView { operation?: TranslationOperation }
@@ -249,6 +250,11 @@ async function reserveRequest(limit: number, intervalMs: number, model: string) 
   return { dateKey, retryAfterSeconds: usage.requests >= limit ? Math.ceil((getNextTranslationDayStart(now).getTime() - now.getTime()) / 1000)
     : Math.max(1, Math.ceil((Math.max(usage.nextRequestAt.getTime(), usage.blockedUntil?.getTime() || 0) - now.getTime()) / 1000)) }
 }
+async function rememberTranslationModel(dateKey: string, model: string) {
+  try { await prisma.newsTranslationUsage.create({ data: { dateKey, model: FREE_TRANSLATION_MODEL, activeModel: model } }) }
+  catch (error) { if (!isUniqueConflict(error)) throw error }
+  await prisma.newsTranslationUsage.updateMany({ where: { dateKey, model: FREE_TRANSLATION_MODEL }, data: { activeModel: model } })
+}
 class TranslationDeferred extends Error {
   constructor(public retryAfterSeconds: number, message = "사용 가능한 모델이 없거나 요청 간격 때문에 대기합니다.",
     public quota?: string, public httpStatus?: number) { super(message) }
@@ -281,7 +287,8 @@ export function getTranslationRequestInterval(body: string, model: string = FREE
   return Math.max(intervalMs, Math.ceil(estimatedTokens * 60_000 / INPUT_TOKENS_PER_MINUTE))
 }
 
-async function translateJob(job: Job, key: string, request = prepareTranslationJob(job), model: string = FREE_TRANSLATION_MODEL) {
+async function translateJob(job: Job, key: string, request = prepareTranslationJob(job), model: string = FREE_TRANSLATION_MODEL,
+  onResponse?: () => Promise<void>) {
   const { protectedTitle, protectedText } = request
   if (!needsTranslationCall(job)) return {
     title: job.title, text: restoreTranslationText(protectedText.text, protectedText.tokens),
@@ -322,6 +329,8 @@ async function translateJob(job: Job, key: string, request = prepareTranslationJ
       "Gemini 일시적 서버 오류 (HTTP " + response.status + "): " + message, undefined, response.status)
     throw new TranslationApiError(response.status, "Gemini HTTP " + response.status + ": " + message)
   }
+  // HTTP 응답이 정상인 모델을 기억합니다. 기사별 검증 실패가 모델 선택을 되돌리지 않게 합니다.
+  await onResponse?.()
   const data = await response.json()
   const candidate = data?.candidates?.[0]
   if (candidate?.finishReason !== "STOP") throw new Error("번역 응답 미완료: " + (candidate?.finishReason || data?.promptFeedback?.blockReason || "후보 없음"))
@@ -364,7 +373,7 @@ export async function translateArticleStep(article: TranslationArticle, kind?: K
   const where = { id: reservation.id, sourceHash: job.sourceHash, status: "processing" }
   let retryAfterSeconds = 0
   const operation: TranslationOperation = { kind: job.kind, chunkIndex: job.chunkIndex, outcome: "waiting",
-    model: null, attempts: [], retryAfterSeconds: 0 }
+    model: null, attempts: [], modelSwitches: [], retryAfterSeconds: 0 }
   try {
     const recent = job.kind === CURATION_KIND ? await prisma.newsTranslation.findMany({
       where: { kind: CURATION_KIND, status: "ready", newsId: { not: article.id },
@@ -379,15 +388,14 @@ export async function translateArticleStep(article: TranslationArticle, kind?: K
     else {
       // 입력 크기는 모델 전환이나 사용량 예약 전에 검증합니다.
       getTranslationRequestInterval(request.body)
-      for (const candidate of FREE_TRANSLATION_MODELS) {
+      const attemptedModels = new Set<string>()
+      let previousModel: string | undefined
+      for (let attempt = 0; attempt < FREE_TRANSLATION_MODELS.length; attempt++) {
         const availability = await getTranslationAvailability(config.dailyLimit)
-        if (availability.model !== candidate.model) {
-          const state = availability.models.find((model) => model.model === candidate.model)!
-          operation.attempts.push({ model: candidate.model, outcome: "skipped", quota: state.quotaStatus === "daily_limit" ? "앱 RPD" : undefined,
-            reason: state.quotaStatus === "daily_limit" ? "앱의 모델별 일일 한도 도달" : "이전 API 한도·오류로 모델 대기 중", retryAfterSeconds: state.retryAfterSeconds })
-          continue
-        }
+        previousModel ??= availability.currentModel
         if (availability.retryAfterSeconds) throw new TranslationDeferred(availability.retryAfterSeconds)
+        if (!availability.model || attemptedModels.has(availability.model)) throw new TranslationDeferred(1)
+        const candidate = FREE_TRANSLATION_MODELS.find((model) => model.model === availability.model)!
         const intervalMs = getTranslationRequestInterval(request.body, candidate.model)
         const budget = await reserveRequest(getModelDailyLimit(candidate, config.dailyLimit), intervalMs, candidate.model)
         if (budget.retryAfterSeconds) {
@@ -395,11 +403,22 @@ export async function translateArticleStep(article: TranslationArticle, kind?: K
           if (next.model && next.model !== candidate.model && !next.retryAfterSeconds) continue
           throw new TranslationDeferred(Math.max(1, next.retryAfterSeconds))
         }
+        if (previousModel !== candidate.model) {
+          const state = availability.models.find((model) => model.model === previousModel)!
+          const reason = operation.attempts.findLast((item) => item.model === previousModel)?.reason ||
+            (state.quotaStatus === "daily_limit" ? "앱의 모델별 일일 한도 도달" : "이전 API 한도·오류로 모델 대기 중")
+          if (!attemptedModels.has(previousModel)) operation.attempts.push({ model: previousModel, outcome: "skipped",
+            quota: state.quotaStatus === "daily_limit" ? "앱 RPD" : undefined, reason, retryAfterSeconds: state.retryAfterSeconds })
+          operation.modelSwitches.push({ from: previousModel, to: candidate.model, reason })
+        }
+        previousModel = candidate.model
+        attemptedModels.add(candidate.model)
         // 여러 모델을 재시도하는 동안에도 예약을 갱신해 60초 뒤의 중복 회수를 막습니다.
         await prisma.newsTranslation.updateMany({ where, data: { startedAt: new Date() } })
         operation.model = candidate.model
         try {
-          result = await translateJob(job, config.key, request, candidate.model)
+          result = await translateJob(job, config.key, request, candidate.model,
+            availability.currentModel !== candidate.model ? () => rememberTranslationModel(budget.dateKey, candidate.model) : undefined)
           operation.attempts.push({ model: candidate.model, outcome: "success" })
           break
         } catch (error) {
@@ -576,12 +595,17 @@ export async function getTranslationAvailability(limit: number) {
     const nextAt = Math.max(quotaAt, usage?.nextRequestAt.getTime() || 0)
     const quotaStatus = usage && usage.requests >= dailyLimit ? "daily_limit" : quotaAt > now.getTime() ? "api_wait" : nextAt > now.getTime() ? "interval" : "available"
     return { model: candidate.model, requests: usage?.requests || 0, dailyLimit, freeTierLimits: candidate.limits,
-      quotaStatus, quotaAvailable: quotaAt <= now.getTime(), retryAfterSeconds: Math.max(0, Math.ceil((nextAt - now.getTime()) / 1000)) }
+      activeModel: usage?.activeModel || null, quotaStatus, quotaAvailable: quotaAt <= now.getTime(), retryAfterSeconds: Math.max(0, Math.ceil((nextAt - now.getTime()) / 1000)) }
   }))
-  // 정상 요청 간격은 기다리고, 자체 한도 또는 429 대기 중인 모델만 건너뜁니다.
-  const available = models.find((candidate) => candidate.quotaAvailable)
+  const remembered = models.find((candidate) => candidate.model === FREE_TRANSLATION_MODEL)?.activeModel
+  const rememberedIndex = models.findIndex((candidate) => candidate.model === remembered)
+  const currentIndex = Math.max(0, rememberedIndex)
+  const currentModel = models[currentIndex].model
+  // 기억한 모델부터 시작하고, 한도·오류 대기 때만 다음 모델을 선택합니다. 정상 요청 간격은 기다립니다.
+  const ordered = [...models.slice(currentIndex), ...models.slice(0, currentIndex)]
+  const available = ordered.find((candidate) => candidate.quotaAvailable)
   return { dateKey, requests: models.reduce((sum, candidate) => sum + candidate.requests, 0),
-    model: available?.model || null, models,
+    currentModel, model: available?.model || null, models,
     retryAfterSeconds: available?.retryAfterSeconds ?? Math.min(...models.map((candidate) => candidate.retryAfterSeconds)) }
 }
 

@@ -22,6 +22,7 @@ async function main() {
       "선별 채택: " + count(status.selectedArticles) + "건 / 제외: " + count(status.rejectedArticles) + "건",
       "처리 대기: " + count(status.pendingArticles) + "건 (진행 중·재시도 포함)",
       "오늘 AI 요청: " + count(status.requests) + " / " + count(status.dailyLimit) + "회 (남은 " + count(Math.max(0, status.dailyLimit - status.requests)) + "회)",
+      "기억한 현재 모델: " + status.currentModel,
       "다음 사용 모델: " + (status.model || "모든 모델이 대기 중"),
       ...status.models.map((model) => "  " + model.model + ": " + count(model.requests) + " / " + count(model.dailyLimit) + "회 — " +
         ({ daily_limit: "앱 일일 한도 도달", api_wait: "API 한도·오류 대기", interval: "요청 간격 대기", available: "앱 기록상 요청 가능" }[model.quotaStatus]) +
@@ -54,9 +55,7 @@ async function main() {
             const label = { quota: "한도 도달", unavailable: "모델 사용 불가", temporary: "일시 오류", skipped: "모델 건너뜀", failed: "요청 실패" }[attempt.outcome]
             console.log("[번역 큐] " + label + " " + JSON.stringify({ newsId: step.newsId, ...attempt }))
           }
-          if (operation.model && operation.attempts.some((attempt) => attempt.model !== operation.model && attempt.outcome !== "success")) {
-            console.log("[번역 큐] 모델 전환 " + JSON.stringify({ newsId: step.newsId, model: operation.model }))
-          }
+          for (const change of operation.modelSwitches) console.log("[번역 큐] 모델 전환 " + JSON.stringify({ newsId: step.newsId, ...change }))
         }
         const label = operation ? { ready: "저장 성공", rejected: "선별 제외", failed: "실패", waiting: "재시도 대기" }[operation.outcome] : "작업 건너뜀"
         console.log("[번역 큐] " + label + " " + JSON.stringify(step))

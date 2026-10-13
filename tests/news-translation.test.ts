@@ -633,10 +633,13 @@ for (const quota of [
     assert.equal((await translateArticleStep(article)).contentStatus,"ready")
     assert.match(requests[2].url,/gemini-3\.1-flash-lite/)
     assert.equal(usage[0].requests,1)
-    // 분당 한도가 회복되면 우선순위가 높은 모델을 다시 사용합니다.
-    mock.timers.tick(quota.seconds*1000)
+    // 분당 한도가 회복돼도 성공한 대체 모델을 유지하며, 새 날짜에만 기본 모델로 복귀합니다.
+    mock.timers.tick(61000)
     await translateArticleStep({...article,id:"recovered"})
-    assert.match(requests[3].url,new RegExp(FREE_TRANSLATION_MODEL))
+    assert.match(requests[3].url,/gemini-3\.1-flash-lite/)
+    mock.timers.tick(24*3600*1000)
+    await translateArticleStep({...article,id:"new-day"})
+    assert.match(requests[4].url,new RegExp(FREE_TRANSLATION_MODEL))
   })
 }
 
@@ -847,4 +850,101 @@ test("API 번역에 성공해도 DB 저장이 되지 않으면 저장 성공으�
   assert.equal(result.operation?.outcome,"failed")
   assert.match(result.operation?.reason||"",/저장하지 못했습니다/)
   assert.equal(rows[0].translatedText,null)
+})
+
+test("성공한 대체 모델을 기억해 이전 모델이 회복돼도 다음 기사에서 직접 사용한다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,requests:450,nextRequestAt:new Date(),blockedUntil:null})
+  mock.method(globalThis,"fetch",async(url:string | URL | Request,init?:RequestInit)=>{
+    const input=JSON.parse(JSON.parse(String(init?.body)).contents[0].parts[0].text)
+    requests.push({url:String(url),input})
+    if(String(url).includes("gemini-3.1-flash-lite")) throw Object.assign(new Error("timeout"),{name:"TimeoutError"})
+    return successfulResponse(input)
+  })
+  const first=await translateArticleStep(article)
+  assert.equal(first.operation?.model,"gemini-3.8-flash")
+  assert.equal(usage[0].activeModel,"gemini-3.8-flash")
+  assert.deepEqual(first.operation?.modelSwitches.map(change=>change.to),["gemini-3.1-flash-lite","gemini-3.8-flash"])
+  mock.timers.tick(61000)
+  const next=await translateArticleStep({...article,id:"next-sticky"})
+  assert.equal(next.operation?.model,"gemini-3.8-flash")
+  assert.deepEqual(next.operation?.modelSwitches,[])
+  assert.deepEqual(next.operation?.attempts.map(item=>item.outcome),["success"])
+  assert.equal(requests.length,3)
+  assert.match(requests[2].url,/gemini-3\.8-flash/)
+})
+
+test("DB에 저장된 현재 모델만으로 재시작 후에도 같은 모델에서 시작한다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:2,nextRequestAt:new Date(),blockedUntil:null})
+  const available=await getTranslationAvailability(450)
+  assert.equal(available.currentModel,"gemini-3.8-flash")
+  assert.equal(available.model,"gemini-3.8-flash")
+  await translateArticleStep(article)
+  assert.equal(requests.length,1)
+  assert.match(requests[0].url,/gemini-3\.8-flash/)
+  assert.equal(usage[0].requests,2)
+})
+
+test("기억한 모델의 정상 요청 간격 동안에는 다른 모델로 이동하지 않는다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:0,nextRequestAt:new Date(),blockedUntil:null})
+  await translateArticleStep(article)
+  mock.timers.tick(5000)
+  const waiting=await translateArticleStep({...article,id:"interval-sticky"})
+  assert.equal(waiting.operation?.outcome,"waiting")
+  assert.deepEqual(waiting.operation?.modelSwitches,[])
+  assert.equal(requests.length,1)
+  assert.equal((await getTranslationAvailability(450)).retryAfterSeconds,8)
+  assert.equal((await getTranslationAvailability(450)).currentModel,"gemini-3.8-flash")
+})
+
+test("기억한 모델이 소진되면 그 다음 모델로 전환하고 새 모델을 기억한다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:0,nextRequestAt:new Date(),blockedUntil:null})
+  usage.push({dateKey:"2026-10-01",model:"gemini-3.8-flash",requests:18,nextRequestAt:new Date(),blockedUntil:null})
+  const result=await translateArticleStep(article)
+  assert.equal(result.operation?.model,"gemini-3.6-flash")
+  assert.deepEqual(result.operation?.modelSwitches.map(change=>[change.from,change.to]),[["gemini-3.8-flash","gemini-3.6-flash"]])
+  assert.equal(usage[0].activeModel,"gemini-3.6-flash")
+  assert.equal(requests.length,1)
+})
+
+test("기사별 검증 실패로 기본 모델을 재탐색하거나 현재 모델을 되돌리지 않는다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,requests:450,nextRequestAt:new Date(),blockedUntil:null})
+  mock.method(globalThis,"fetch",async()=>new Response(JSON.stringify({candidates:[{finishReason:"STOP",content:{parts:[{text:"invalid json"}]}}]})))
+  const failed=await translateArticleStep(article)
+  assert.equal(failed.operation?.outcome,"failed")
+  assert.equal(usage[0].activeModel,"gemini-3.1-flash-lite")
+  mock.timers.tick(5000)
+  mock.method(globalThis,"fetch",async(url:string | URL | Request,init?:RequestInit)=>{
+    const input=JSON.parse(JSON.parse(String(init?.body)).contents[0].parts[0].text)
+    requests.push({url:String(url),input});return successfulResponse(input)
+  })
+  const next=await translateArticleStep({...article,id:"next-after-validation"})
+  assert.deepEqual(next.operation?.modelSwitches,[])
+  assert.deepEqual(next.operation?.attempts.map(item=>item.model),["gemini-3.1-flash-lite"])
+})
+
+test("새 태평양 날짜가 시작되면 이전 기록을 보존하면서 기본 모델로 복귀한다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:7,nextRequestAt:new Date(),blockedUntil:null})
+  mock.timers.tick(6*3600*1000)
+  assert.equal((await getTranslationAvailability(450)).currentModel,FREE_TRANSLATION_MODEL)
+  await translateArticleStep(article)
+  assert.match(requests[0].url,new RegExp(FREE_TRANSLATION_MODEL))
+  assert.equal(usage[0].activeModel,"gemini-3.8-flash")
+  assert.equal(usage[0].requests,7)
+  assert.equal(usage[1].dateKey,"2026-10-02")
+})
+
+test("모델 확인 명령은 기억한 현재 모델을 바꾸지 않는다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:7,nextRequestAt:new Date(),blockedUntil:null})
+  await checkTranslationModels()
+  assert.equal(usage[0].activeModel,"gemini-3.8-flash")
+  assert.equal(usage[0].requests,7)
+})
+
+test("모든 모델이 응답에 실패하면 이전에 기억한 모델은 유지한다",async()=>{
+  usage.push({dateKey:"2026-10-01",model:FREE_TRANSLATION_MODEL,activeModel:"gemini-3.8-flash",requests:7,nextRequestAt:new Date(),blockedUntil:null})
+  mock.method(globalThis,"fetch",async()=>new Response("",{status:503}))
+  const result=await translateArticleStep(article)
+  assert.equal(result.operation?.outcome,"waiting")
+  assert.deepEqual(result.operation?.attempts.map(item=>item.model),["gemini-3.8-flash","gemini-3.6-flash",FREE_TRANSLATION_MODEL,"gemini-3.1-flash-lite"])
+  assert.equal(usage[0].activeModel,"gemini-3.8-flash")
 })
