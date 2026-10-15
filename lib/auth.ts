@@ -16,7 +16,7 @@ function getTokenMaxAge(name: "JWT_ACCESS_EXPIRES_IN" | "JWT_REFRESH_EXPIRES_IN"
   return seconds
 }
 
-const ACCESS_TOKEN_MAX_AGE = getTokenMaxAge("JWT_ACCESS_EXPIRES_IN", 15 * 60)
+const ACCESS_TOKEN_MAX_AGE = getTokenMaxAge("JWT_ACCESS_EXPIRES_IN", 60 * 60)
 const REFRESH_TOKEN_MAX_AGE = getTokenMaxAge("JWT_REFRESH_EXPIRES_IN", 7 * 24 * 60 * 60)
 
 export interface TokenPayload extends JWTPayload {
