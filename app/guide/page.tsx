@@ -54,7 +54,7 @@ export default function NewsGuidePage() {
         <section aria-labelledby="feeds-title" className="mb-12">
           <h2 id="feeds-title" className="text-2xl font-semibold mb-2">수집하는 개발·기술 피드</h2>
           <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-            여러 기술 출처에서 후보를 모으고, 실제 본문으로 새로운 변화·실무 가치·흥미로운 발견을 확인합니다. 채택한 글은 한국어 제목과 2~3문장 AI 요약으로 표시합니다. 내용이 빈약한 광고·홍보, 개인 질문과 하소연은 제외하며 원문 근거나 수치를 확인하지 못한 요약은 게시를 보류합니다.
+            여러 출처에서 후보를 모으고, 원문에서 새로운 변화·실무 가치·구체적인 사실을 확인합니다. 채택한 글은 한국어 제목과 짧은 AI 요약으로 표시하며, 상세에서 핵심 항목과 주제별 정리를 읽을 수 있습니다. 내용이 빈약한 광고·홍보, 개인 질문과 하소연은 제외하며 원문 근거나 수치를 확인하지 못한 요약은 게시를 보류합니다.
           </p>
           <ul className="grid gap-4 sm:grid-cols-2">
             {TECH_FEED_SOURCES.map((source) => (
@@ -97,15 +97,15 @@ export default function NewsGuidePage() {
             </details>
             <details className="py-4">
               <summary className="font-medium cursor-pointer">피드에 전체 본문이 없으면 어떻게 읽나요?</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">피드가 제공하는 전체 본문을 저장하고, Hugging Face, Node.js, Next.js, Python, Java, MySQL은 확인한 공식 원문 영역에서 본문을 보강합니다. PostgreSQL News는 피드에 담긴 전체 공지 본문을 사용합니다. 본문을 확보하지 못한 피드 글은 새로 수집하지 않습니다. 상세 화면의 ‘출처에서 읽기’에서도 원문을 확인할 수 있습니다. 커뮤니티 게시글과 댓글을 기사로 수집하지 않습니다.</p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">원문은 요약할 때만 읽고, 한국어 핵심 요약과 주제별 정리로 제공합니다. 전문과 전문 번역은 보관하거나 표시하지 않습니다. 본문을 확인할 수 없으면 요약을 게시하지 않습니다. 전체 글은 상세 화면의 ‘원본보기’에서 확인할 수 있습니다. 커뮤니티 게시글과 댓글을 기사로 수집하지 않습니다.</p>
             </details>
             <details className="py-4">
               <summary className="font-medium cursor-pointer">메일 브리핑은 어떻게 구성되나요?</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">일일 브리핑의 대상은 저장된 기사 중 표시 시각이 지난 24시간에 해당하는 기사입니다. 모든 카테고리를 대상으로 하며, 화면에서 선택한 주제로 제한되지는 않습니다. AI가 만든 내용은 ‘AI 요약’, 기사 설명은 ‘원문 발췌’, 제목만 있는 경우는 ‘제목만 제공’으로 표시합니다. 연결된 출처에서 전체 맥락을 확인할 수 있습니다. 자동 발송이 설정된 환경에서는 한국 시각 오전 7시에 보내며, 프로필에서 구독을 관리합니다.</p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">일일 브리핑의 대상은 지난 24시간에 발행되고 한국어 요약이 준비된 기사입니다. 모든 카테고리를 대상으로 하며, 화면에서 선택한 주제로 제한되지는 않습니다. 한국어 AI 요약과 원본 링크를 제공하므로 출처에서 전체 맥락을 확인할 수 있습니다. 자동 발송이 설정된 환경에서는 한국 시각 오전 7시에 보내며, 프로필에서 구독을 관리합니다.</p>
             </details>
             <details className="py-4">
               <summary className="font-medium cursor-pointer">선택한 기사를 메일로 받을 수 있나요?</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">로그인 후 기사 목록의 메일 버튼을 누르거나 체크박스로 최대 50개 기사를 선택해 계정 이메일로 받을 수 있습니다. 선택 기사 메일에는 기술 기사의 AI 요약 또는 일반 기사의 소개와 출처 링크를 담습니다. 프로필의 테스트 브리핑도 현재 로그인한 계정으로 발송됩니다.</p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">로그인 후 기사 목록의 메일 버튼을 누르거나 체크박스로 최대 50개 기사를 선택해 계정 이메일로 받을 수 있습니다. 선택 기사 메일에는 한국어 AI 요약과 원본 링크를 담습니다. 프로필의 테스트 브리핑도 현재 로그인한 계정으로 발송됩니다.</p>
             </details>
           </div>
         </section>

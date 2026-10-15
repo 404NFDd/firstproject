@@ -2,4 +2,6 @@
 process.env.DATABASE_URL = "mysql://unit_test:invalid@127.0.0.1:1/unit_test"
 process.env.TRANSLATION_GEMINI_API_KEY = ""
 process.env.TRANSLATION_FREE_TIER_CONFIRMED = ""
+process.env.SUMMARY_GEMINI_API_KEY = ""
+process.env.SUMMARY_FREE_TIER_CONFIRMED = ""
 process.env.GEMINI_API_KEY = ""

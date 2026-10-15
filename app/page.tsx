@@ -9,7 +9,7 @@ import { NewsCard } from "@/components/news-card"
 import { NEWS_CATEGORIES, TECH_NEWS_CATEGORY_VALUES, getNewsCategoryLabel } from "@/lib/news-categories"
 import { TECH_FEED_SOURCES } from "@/lib/feed-sources"
 import { readNewsListFilters, newsListQuery } from "@/lib/news-list-filters"
-import { Loader2 } from "lucide-react"
+import { Loader2, RefreshCw, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface NewsArticle {
@@ -18,8 +18,6 @@ interface NewsArticle {
   description?: string
   preview?: string
   previewType?: "summary" | "description" | "content" | "none"
-  originalTitle?: string
-  isTranslated?: boolean
   imageUrl?: string
   sourceUrl?: string
   source: string
@@ -312,11 +310,10 @@ function Dashboard() {
   }
 
   const categories = [
-    { value: "tech", label: "기술 전체", description: "개발, 엔지니어링, AI, 클라우드와 릴리스 소식을 여러 기술 피드와 네이버 IT·과학 뉴스에서 모아봅니다." },
+    { value: "tech", label: "기술 전체" },
     ...NEWS_CATEGORIES.map((item) => item.value === "105" ? { ...item, label: "네이버 IT·과학" } : item),
-    { value: "all", label: "모든 뉴스", description: "개발·기술 소식과 종합뉴스를 발행 시각 순으로 살펴봅니다." },
+    { value: "all", label: "모든 뉴스" },
   ]
-  const categoryDescription = categories.find((item) => item.value === category)?.description
   const categoryName = category === "tech" ? "개발·기술 전체" : category === "all" ? "전체" : getNewsCategoryLabel(category)
   const syncLabel = "뉴스 수집"
 
@@ -325,91 +322,59 @@ function Dashboard() {
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">뉴스 피드</h1>
-            <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-              기술 뉴스를 모아 AI로 요약합니다.
-            </p>
-            <Link href="/guide" className="inline-flex mt-2 text-xs text-primary hover:underline">
-              수집과 AI 요약 안내
-            </Link>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">뉴스 피드</h1>
+            <button
+              type="button"
+              onClick={syncNews}
+              disabled={syncing || sessionStatus === "loading"}
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            >
+              {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {syncing ? "수집 중..." : sessionStatus === "unauthenticated" ? `로그인하고 ${syncLabel}` : syncLabel}
+            </button>
           </div>
 
-          {/* Category Filter */}
-          <div className="flex overflow-x-auto md:flex-wrap md:overflow-visible gap-2 pb-3 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                aria-pressed={category === cat.value}
-                onClick={() => handleCategoryChange(cat.value)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${category === cat.value
-                  ? "bg-primary text-primary-foreground"
-                  : "glass text-muted-foreground hover:text-foreground"
-                  }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={(event) => { event.preventDefault(); changeFilters({ search: searchDraft.trim() }) }} className="mb-6 flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-48">
-              <label htmlFor="news-search" className="block text-sm mb-2">뉴스 검색</label>
-              <input id="news-search" type="search" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)}
-                maxLength={200} placeholder="제목과 본문에서 검색"
-                className="w-full rounded-md border border-border bg-card px-3 py-2" />
+          <form onSubmit={(event) => { event.preventDefault(); changeFilters({ search: searchDraft.trim() }) }}
+            className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-[160px_minmax(0,1fr)_128px]">
+            <div className="min-w-0">
+              <label htmlFor="news-category" className="sr-only">뉴스 분야</label>
+              <select id="news-category" value={category} onChange={(event) => handleCategoryChange(event.target.value)}
+                className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm">
+                {categories.map((cat) => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
+              </select>
             </div>
-            <button type="submit" className="rounded-md bg-primary text-primary-foreground px-4 py-2">검색</button>
-            {search && <button type="button" onClick={() => changeFilters({ search: "" })} className="rounded-md border border-border px-4 py-2">검색 해제</button>}
-            <div>
-              <label htmlFor="news-sort" className="block text-sm mb-2">정렬</label>
+            <div className="col-span-2 row-start-2 flex min-w-0 gap-2 sm:col-span-1 sm:row-auto">
+              <div className="relative min-w-0 flex-1">
+                <label htmlFor="news-search" className="sr-only">뉴스 검색</label>
+                <input id="news-search" type="search" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)}
+                  maxLength={200} placeholder="뉴스 검색"
+                  className={`h-10 w-full rounded-md border border-border bg-card pl-3 text-sm ${search ? "pr-10 [&::-webkit-search-cancel-button]:appearance-none" : "pr-3"}`} />
+                {search && <button type="button" aria-label="검색 해제" title="검색 해제" onClick={() => changeFilters({ search: "" })}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>}
+              </div>
+              <button type="submit" className="h-10 shrink-0 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">검색</button>
+            </div>
+            <div className="col-start-2 row-start-1 min-w-0 sm:col-start-auto sm:row-auto">
+              <label htmlFor="news-sort" className="sr-only">뉴스 정렬</label>
               <select id="news-sort" value={sort} onChange={(event) => changeFilters({ sort: event.target.value as typeof sort })}
-                className="rounded-md border border-border bg-card px-3 py-2">
+                className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm">
                 <option value="latest">최신순</option><option value="priority">우선순위순</option><option value="popular">인기순</option>
               </select>
             </div>
           </form>
 
-          <div className="mb-5" aria-live="polite">
-            <h2 className="text-xl font-semibold">{categoryName} 소식</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{categoryDescription}</p>
-          </div>
-
-          <div className="mb-5 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={syncNews}
-                disabled={syncing || sessionStatus === "loading"}
-                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                {syncing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    수집 중...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    {sessionStatus === "unauthenticated" ? `로그인하고 ${syncLabel}` : syncLabel}
-                  </>
-                )}
-              </button>
-              <p className="text-xs text-muted-foreground">뉴스 피드를 수집합니다.</p>
-            </div>
-
-            {selectedNews.size > 0 && (
-              <button
-                onClick={handleSendSelectedEmail}
-                className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition text-sm font-medium"
-              >
+          {selectedNews.size > 0 && (
+            <div className="mb-5">
+              <button type="button" onClick={handleSendSelectedEmail}
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition hover:bg-accent/90">
                 {selectedNews.size}개 기사 이메일 발송
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* News Grid */}
           {loading && news.length === 0 ? (
@@ -506,8 +471,6 @@ function Dashboard() {
                     <NewsCard
                       id={article.id}
                       title={article.title}
-                      originalTitle={article.originalTitle}
-                      isTranslated={article.isTranslated}
                       description={article.description || ""}
                       sourceUrl={article.sourceUrl}
                       imageUrl={article.imageUrl}

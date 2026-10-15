@@ -4,7 +4,7 @@ import { getRequestUser } from "@/lib/request-auth"
 import { sendNewsEmail } from "@/lib/email-service"
 import { EXCLUDED_COMMUNITY_SOURCES } from "@/lib/feed-sources"
 import { prisma } from "@/lib/prisma"
-import { PUBLISHED_TRANSLATION_FILTER, getListTranslations } from "@/lib/news-translation"
+import { PUBLISHED_SUMMARY_FILTER, getListSummaries } from "@/lib/news-summary-service"
 import { isCurationArticle } from "@/lib/news-curation"
 
 const emailRequestSchema = z.object({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const news = await prisma.news.findMany({
       where: {
         source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] },
-        ...PUBLISHED_TRANSLATION_FILTER,
+        ...PUBLISHED_SUMMARY_FILTER,
         id: {
           in: newsIds,
         },
@@ -59,10 +59,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 이메일 발송
-    const summaries = await getListTranslations(news.filter(isCurationArticle))
+    const summaries = await getListSummaries(news.filter(isCurationArticle))
     const emailNews = news.map((article) => {
       const summary = summaries.get(article.id)
-      return summary?.isSummary ? { ...article, title: summary.title, description: summary.preview, isAiSummary: true } : article
+      return summary?.isSummary ? { ...article, title: summary.title, description: summary.preview, content: null, isAiSummary: true }
+        : { ...article, description: null, content: null }
     })
     const result = await sendNewsEmail(user.email, emailNews, title || `NewsHub - ${news.length}개 기사`)
 

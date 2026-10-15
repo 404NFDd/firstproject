@@ -129,12 +129,12 @@ async function fetchFeedText(url: string, article = false, signal?: AbortSignal)
   throw new Error("피드를 가져올 수 없습니다.")
 }
 
-export async function fetchArticleContent(sourceId: string, sourceUrl: string, signal?: AbortSignal): Promise<string | undefined> {
+export async function fetchArticleContent(sourceId: string, sourceUrl: string, signal?: AbortSignal, includeLinks = false): Promise<string | undefined> {
   if (!supportsArticleContent(sourceId, sourceUrl)) return undefined
-  return sourceContentText(sourceId, await fetchFeedText(sourceUrl, true, signal))
+  return sourceContentText(sourceId, await fetchFeedText(sourceUrl, true, signal), includeLinks ? sourceUrl : undefined)
 }
 
-async function fetchSource(source: TechFeedSource, limit: number, report: CollectionReport, signal?: AbortSignal): Promise<FeedArticle[]> {
+async function fetchSource(source: TechFeedSource, limit: number, report: CollectionReport, signal?: AbortSignal, targetUrl?: string, metadataOnly = false): Promise<FeedArticle[]> {
   const xml = await fetchFeedText(source.url, false, signal)
   // CDATA의 기사 HTML과 XML 주석 안의 문자는 XML DTD 선언이 아닙니다.
   const declarations = xml.replace(/<!\[CDATA\[[\s\S]*?\]\]>|<!--[\s\S]*?-->/g, "")
@@ -170,7 +170,7 @@ async function fetchSource(source: TechFeedSource, limit: number, report: Collec
     }
 
     // PostgreSQL News의 RSS description은 요약이 아닌 전체 공지 본문입니다.
-    const content = feedContentText(item["content:encoded"] || (isAtom || source.id === "postgresql" ? item.content : undefined))
+    const content = feedContentText(item["content:encoded"] || (isAtom || source.id === "postgresql" ? item.content : undefined), targetUrl ? sourceUrl : undefined)
     // 일부 Laravel 릴리스는 version, Changes 등 단어 하나만 제공하므로 건너뜁니다.
     if (source.id === "laravel" && /^(?:changes|version|what[’']s changed)$/i.test(content?.trim() ?? "")) {
       report.excluded++
@@ -186,13 +186,15 @@ async function fetchSource(source: TechFeedSource, limit: number, report: Collec
     if (!existing || article.publishedAt > existing.publishedAt) articles.set(sourceUrl, article)
   }
 
-  const latest = [...articles.values()].sort((left, right) => right.publishedAt.getTime() - left.publishedAt.getTime()).slice(0, limit)
+  const latest = [...articles.values()].filter((article) => !targetUrl || article.sourceUrl === targetUrl)
+    .sort((left, right) => right.publishedAt.getTime() - left.publishedAt.getTime()).slice(0, limit)
   report.limited = Math.max(0, articles.size - latest.length)
+  if (metadataOnly) return latest.map((article) => ({ ...article, description: undefined, content: undefined }))
   // 전체 피드 이력을 요청하지 않고 이번 수집 범위의 빈 본문만 보강합니다.
   for (const article of latest) {
     if (article.content) continue
     try {
-      article.content = await fetchArticleContent(source.id, article.sourceUrl, signal)
+      article.content = await fetchArticleContent(source.id, article.sourceUrl, signal, Boolean(targetUrl))
     } catch {
       console.warn("기사 본문을 가져오지 못했습니다:", source.id)
     }
@@ -206,8 +208,16 @@ async function fetchSource(source: TechFeedSource, limit: number, report: Collec
   return accepted
 }
 
+// 큐에는 URL만 남기고, 요약 실행 시 해당 기사의 본문을 메모리로 읽습니다.
+export async function fetchFeedSummaryContent(source: TechFeedSource, sourceUrl: string, signal?: AbortSignal) {
+  const report: CollectionReport = { id: source.id, name: source.name, status: "success", received: 0,
+    accepted: 0, excluded: 0, limited: 0, missingContent: 0, reasons: {}, durationMs: 0 }
+  const [article] = await fetchSource(source, 1, report, signal, sourceUrl)
+  return article?.content || await fetchArticleContent(source.id, sourceUrl, signal, true)
+}
+
 export async function fetchTechFeeds(
-  options: { categories?: TechCategory[]; limitPerSource?: number; signal?: AbortSignal } = {}
+  options: { categories?: TechCategory[]; limitPerSource?: number; signal?: AbortSignal; metadataOnly?: boolean } = {}
 ): Promise<{ articles: FeedArticle[]; failedSources: string[]; sourceReports: CollectionReport[] }> {
   const limit = options.limitPerSource ?? 10
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new RangeError("소스별 수집 수는 1~50의 정수여야 합니다.")
@@ -226,7 +236,7 @@ export async function fetchTechFeeds(
       const signal = AbortSignal.any([...(options.signal ? [options.signal] : []), AbortSignal.timeout(60_000)])
       let articles: FeedArticle[] = []
       try {
-        articles = await fetchSource(source, limit, report, signal)
+        articles = await fetchSource(source, limit, report, signal, undefined, options.metadataOnly)
       } catch (error) {
         report.error = signal.aborted ? "수집 시간 제한을 초과했습니다." : "피드 요청 또는 해석에 실패했습니다."
         report.reasons[signal.aborted ? "timeout" : "source_error"] = 1

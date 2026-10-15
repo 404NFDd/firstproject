@@ -6,11 +6,11 @@ import { Header } from "@/components/header"
 import { ArrowLeft, Share2, ExternalLink, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { decodeHtmlEntities } from "@/lib/text"
-import { getArticleContent } from "@/lib/article-content"
+import { NewsSummary } from "@/components/news-summary"
 import { TECH_NEWS_CATEGORY_VALUES, getNewsCategoryLabel } from "@/lib/news-categories"
 import { getSafeNewsUrl } from "@/lib/news-links"
 import { useToast } from "@/hooks/use-toast"
-import type { NewsTranslationView } from "@/lib/news-translation"
+import type { CurationResult } from "@/lib/news-curation"
 
 interface NewsDetail {
   id: string
@@ -23,7 +23,7 @@ interface NewsDetail {
   category?: string | null
   author?: string
   publishedAt: string
-  translation?: NewsTranslationView
+  summary?: CurationResult | null
 }
 
 // 뉴스 상세 페이지 컴포넌트
@@ -36,8 +36,6 @@ export default function NewsDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
-  const [showOriginal, setShowOriginal] = useState(false)
-  const [translationRetry, setTranslationRetry] = useState(0)
   const { toast } = useToast()
 
   // 페이지 로드 시 스크롤을 최상단으로 강제 이동
@@ -70,7 +68,6 @@ export default function NewsDetailPage() {
   useEffect(() => {
     const controller = new AbortController()
     setNews(null)
-    setShowOriginal(false)
     setError(null)
     setLoading(true)
 
@@ -96,17 +93,13 @@ export default function NewsDetailPage() {
 
     if (params.id) void fetchNews()
     else setLoading(false)
-    return () => controller.abort()
-  }, [params.id, translationRetry])
+    return () => {
+      controller.abort()
+    }
+  }, [params.id])
 
-  const translation = news?.translation
-  const hasTranslation = Boolean(translation?.title || translation?.content)
-  const articleText = getArticleContent(news ? {
-    title: !showOriginal && translation?.title ? translation.title : news.title,
-    description: !showOriginal && translation?.preview !== null && translation?.preview !== undefined ? translation.preview : news.description,
-    content: !showOriginal && translation?.content !== null && translation?.content !== undefined ? translation.content : news.content,
-  } : { title: "" })
-  const decodedTitle = articleText.title
+  const summary = news?.summary
+  const decodedTitle = decodeHtmlEntities(summary?.title || news?.title).trim()
   const sourceLabel = decodeHtmlEntities(news?.source).trim() || "출처 미확인"
   const authorLabel = decodeHtmlEntities(news?.author).trim()
   const sourceUrl = getSafeNewsUrl(news?.sourceUrl)
@@ -207,7 +200,8 @@ export default function NewsDetailPage() {
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">{decodedTitle}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">{sourceUrl ?
+            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary">{decodedTitle}</a> : decodedTitle}</h1>
 
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {authorLabel && <p>작성: {authorLabel}</p>}
@@ -224,28 +218,7 @@ export default function NewsDetailPage() {
           </div>
         </div>
 
-        {(translation?.applicable || translation?.isSummary) && (
-          <div className="mb-6 rounded-lg border border-border bg-card p-4">
-            {hasTranslation && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                <button type="button" aria-pressed={!showOriginal} onClick={() => setShowOriginal(false)}
-                  className="rounded-md border border-border px-3 py-2 text-sm aria-pressed:bg-primary aria-pressed:text-primary-foreground">한국어로 읽기</button>
-                <button type="button" aria-pressed={showOriginal} onClick={() => setShowOriginal(true)}
-                  className="rounded-md border border-border px-3 py-2 text-sm aria-pressed:bg-primary aria-pressed:text-primary-foreground">원문 보기</button>
-              </div>
-            )}
-            {translation.enabled && translation.contentStatus !== "ready" && (
-              <button type="button" onClick={() => setTranslationRetry((value) => value + 1)}
-                className="mb-2 text-sm text-primary hover:underline">번역 상태 확인</button>
-            )}
-            <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
-              {translation.contentStatus === "ready" ? "자동 번역입니다. 원문도 함께 확인할 수 있습니다."
-                : translation.enabled ? "AI 요약을 먼저 읽을 수 있습니다. 전체 본문의 한국어 번역은 준비 중이며 그동안 원문을 표시합니다."
-                : translation.isSummary ? "AI가 정리한 요약입니다. 본문은 원문으로 제공합니다."
-                : "한국어 번역이 아직 준비되지 않았습니다. 준비된 번역이 없는 부분은 원문으로 표시합니다."}
-            </p>
-          </div>
-        )}
+        {summary && <p className="mb-6 text-xs text-muted-foreground">AI가 원문을 한국어로 요약·정리했습니다.</p>}
 
         {/* Image */}
         {news.imageUrl && (
@@ -261,23 +234,11 @@ export default function NewsDetailPage() {
           </div>
         )}
 
-        {/* 기사 소개와 본문 */}
+        {/* 한국어 핵심 요약과 주제별 상세 정리 */}
         <div className="max-w-none mb-8">
-          {articleText.description && (
-            <section className="mb-6" aria-label={!showOriginal && translation?.isSummary ? "AI 요약" : "소개"}>
-              <h2 className="text-sm font-semibold text-muted-foreground mb-2">{!showOriginal && translation?.isSummary ? "AI 요약" : "소개"}</h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">{articleText.description}</p>
-            </section>
-          )}
-          {articleText.content ? (
-            <section aria-label="기사 본문" className="text-foreground leading-relaxed whitespace-pre-wrap">
-              {articleText.content}
-            </section>
-          ) : (
+          {summary ? <NewsSummary summary={summary} /> : (
             <p className="p-4 rounded-lg border border-border bg-muted text-muted-foreground">
-              {sourceUrl
-                ? "표시할 본문이 없는 소식입니다. 전체 글이나 토론은 아래 출처 링크에서 확인해 주세요."
-                : "표시할 본문이 없고 출처 링크도 확인할 수 없습니다."}
+              한국어 요약·정리가 아직 준비되지 않았습니다.
             </p>
           )}
         </div>
@@ -292,10 +253,10 @@ export default function NewsDetailPage() {
                 rel="noopener noreferrer"
                 className="text-primary hover:underline inline-flex items-center gap-2"
               >
-                출처에서 읽기
+                원본보기
                 <ExternalLink className="w-4 h-4" aria-hidden="true" />
               </a>
-              <p className="text-sm text-muted-foreground mt-2">출처 링크를 새 탭에서 엽니다. 소개·토론 페이지라면 그 안의 원문 링크를 확인하세요.</p>
+              <p className="text-sm text-muted-foreground mt-2">원문은 출처 사이트에서 확인할 수 있습니다.</p>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">출처 링크를 확인할 수 없습니다.</p>

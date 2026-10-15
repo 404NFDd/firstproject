@@ -8,7 +8,8 @@ import { GET as getNewsRoute } from "../app/api/news/route"
 import { GET as getSync, POST as postSync } from "../app/api/news/sync/route"
 import { EXCLUDED_COMMUNITY_SOURCES, TECH_FEED_SOURCES, type TechFeedSource } from "../lib/feed-sources"
 import { TECH_NEWS_CATEGORY_VALUES } from "../lib/news-categories"
-import { PUBLISHED_TRANSLATION_FILTER } from "../lib/news-translation"
+import { PUBLISHED_SUMMARY_FILTER } from "../lib/news-summary-service"
+import { CURATION_KIND, getCurationHash } from "../lib/news-curation"
 import { newsQuerySchema, newsSyncSchema } from "../lib/news-validation"
 
 const originalNews = prisma.news
@@ -85,15 +86,13 @@ afterEach(() => {
   else process.env.CRON_SECRET = oldCronSecret
 })
 
-test("상세 HTML의 한국 시각, 언론사, 엔티티와 중첩 본문을 정확히 저장한다", async () => {
+test("상세 HTML에서 발행정보만 저장하고 원문 소개와 본문은 저장하지 않는다", async () => {
   const result = await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })
   assert.equal(result.persisted, 1)
   assert.equal(saved[0].source, "언론사")
-  assert.equal(saved[0].description, "정확한 & 설명")
+  assert.equal(saved[0].description, null)
   assert.equal((saved[0].publishedAt as Date).toISOString(), "2026-09-30T15:30:00.000Z")
-  assert.match(String(saved[0].content), /첫 문장 가/)
-  assert.match(String(saved[0].content), /둘째 문장/)
-  assert.doesNotMatch(String(saved[0].content), /가짜 본문/)
+  assert.equal(saved[0].content, null)
 })
 
 test("추적 쿼리와 중복 링크를 수량 제한 전에 제거한다", async () => {
@@ -177,7 +176,7 @@ test("검색·최소 우선순위·동률 정렬을 MySQL 쿼리에 반영한다
   const finder = mock.method(prisma.news, "findMany", async () => [])
   await getNews({ category: "105", search: "  개발  ", sort: "priority", minPriority: 30, page: 2, limit: 5 })
   const args = (finder.mock.calls[0].arguments as unknown as [unknown])[0] as { where: Record<string, unknown>; orderBy: unknown[]; skip: number; take: number }
-  assert.deepEqual(args.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_TRANSLATION_FILTER, category: "105", OR: [{ title: { contains: "개발" } }, { description: { contains: "개발" } }, { content: { contains: "개발" } }, { translations: { some: { kind: "curation-v1", status: "ready", translatedTitle: { contains: "개발" } } } }], priority: { gte: 30 } })
+  assert.deepEqual(args.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_SUMMARY_FILTER, category: "105", OR: [{ title: { contains: "개발" } }, { description: { contains: "개발" } }, { translations: { some: { kind: CURATION_KIND, status: "ready", OR: [{ translatedTitle: { contains: "개발" } }, { translatedText: { contains: "개발" } }] } } }], priority: { gte: 30 } })
   assert.deepEqual(args.orderBy, [{ priority: "desc" }, { publishedAt: "desc" }, { id: "desc" }])
   assert.equal(args.skip, 5)
   assert.equal(args.take, 5)
@@ -213,19 +212,19 @@ test("메타 설명의 비교 기호를 HTML 태그로 삭제하지 않는다", 
     return new Response(String(input).includes("/section/") ? item() : `<meta property="og:description" content="3 &lt; 5 &gt; 2"><meta property="og:image" content="https://example.com/image?a=1&amp;b=2"><span data-date-time="2026-10-01 00:30:00"></span><div id="dic_area">본문</div>`)
   })
   const result = await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })
-  assert.equal(saved[0].description, "3 < 5 > 2")
+  assert.equal(saved[0].description, null)
   assert.equal(saved[0].imageUrl, "https://example.com/image?a=1&b=2")
   assert.deepEqual(result.failedCategories, [])
 })
 
-test("일반 기사 상세 실패와 본문 누락은 목록 저장을 유지하며 부분 실패로 표시한다", async () => {
+test("메타데이터 요청 실패는 부분 실패로 남기고 원문 누락은 메타데이터 저장에 영향을 주지 않는다", async () => {
   for (const response of [new Response("", { status: 403 }), new Response("<html>본문 없음</html>")]) {
     mock.method(globalThis, "fetch", async (input: string | URL | Request) => {
       return String(input).includes("/section/") ? new Response(item(articleUrl, "뉴스 제목", '<span data-date-time="2026-10-01 00:30:00"></span>')) : response
     })
     const result = await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })
     assert.equal(result.persisted, 1)
-    assert.deepEqual(result.failedCategories, ["100"])
+    assert.deepEqual(result.failedCategories, response.status === 403 ? ["100"] : [])
   }
 })
 
@@ -246,29 +245,23 @@ test("메타 속성은 시작 따옴표와 끝을 맞추며 다른 따옴표와 
     return new Response(String(input).includes("/section/") ? item() : `<meta content="한글 '인용' 후속 설명 3 < 5 > 2" property="og:description"><meta name='author' content='기자 &amp; 작가'><span data-date-time="2026-10-01 00:30:00"></span><div id="dic_area">본문</div>`)
   })
   await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })
-  assert.equal(saved[0].description, "한글 '인용' 후속 설명 3 < 5 > 2")
+  assert.equal(saved[0].description, null)
   assert.equal(saved[0].author, "기자 & 작가")
 })
 
-test("같은 원문의 빈 본문만 복구하고 기존 필드와 다른 원문 기사는 덮어쓰지 않는다", async () => {
+test("중복 기사에 원문을 다시 저장하지 않고 기존 필드는 보존한다", async () => {
   const updates: Array<{ data: Record<string, unknown> }> = []
   Object.defineProperty(prisma.news, "update", { value: mock.fn(async (args: { data: Record<string, unknown> }) => { updates.push(args); return args.data }), configurable: true, writable: true })
   mock.method(prisma.news, "findFirst", async () => ({ id: "existing", sourceUrl: articleUrl, content: null, description: "기존 설명", imageUrl: "기존 이미지", author: "기존 작성자" }))
   const result = await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })
-  assert.equal(result.persisted, 1)
-  assert.equal(result.skipped, 0)
-  assert.equal(updates.length, 1)
-  assert.match(String(updates[0].data.content), /첫 문장 가/)
-  assert.equal(updates[0].data.description, "기존 설명")
-  assert.equal(updates[0].data.author, "기존 작성자")
-  assert.equal(updates[0].data.imageUrl, "기존 이미지")
-  assert.equal(updates[0].data.title, undefined)
-  assert.equal(updates[0].data.category, undefined)
+  assert.equal(result.persisted, 0)
+  assert.equal(result.skipped, 1)
+  assert.equal(updates.length, 0)
   mock.method(prisma.news, "findFirst", async () => ({ id: "existing", sourceUrl: articleUrl, content: "기존 본문" }))
   assert.equal((await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })).skipped, 1)
   mock.method(prisma.news, "findFirst", async () => ({ id: "existing", sourceUrl: "다른 원문", content: null }))
   assert.equal((await ingestLatestNews({ categories: ["100"], limitPerCategory: 1 })).skipped, 1)
-  assert.equal(updates.length, 1)
+  assert.equal(updates.length, 0)
 })
 
 
@@ -292,7 +285,7 @@ test("목록의 잘못된 날짜는 상세에서 확인한 발행시각으로 �
   assert.deepEqual(result.failedCategories, [])
 })
 
-test("연예 상세 본문 누락은 빈 본문으로 남기고 같은 원문 재수집으로 복구한다", async () => {
+test("연예 기사도 원문 소개와 본문을 저장하지 않으며 재수집에서 복구하지 않는다", async () => {
   let stored: Record<string, unknown> | null = null
   let hasDetail = false
   mock.method(prisma.news, "findFirst", async () => stored)
@@ -312,16 +305,16 @@ test("연예 상세 본문 누락은 빈 본문으로 남기고 같은 원문 �
   })
   const first = await ingestLatestNews({ categories: ["106"], limitPerCategory: 1 })
   assert.equal(first.persisted, 1)
-  assert.deepEqual(first.failedCategories, ["106"])
-  assert.equal(stored?.["content"], undefined)
-  assert.equal(stored?.["description"], "원문 발췌")
+  assert.deepEqual(first.failedCategories, [])
+  assert.equal(stored?.["content"], null)
+  assert.equal(stored?.["description"], null)
   hasDetail = true
   const repaired = await ingestLatestNews({ categories: ["106"], limitPerCategory: 1 })
-  assert.equal(repaired.persisted, 1)
-  assert.equal(repaired.skipped, 0)
+  assert.equal(repaired.persisted, 0)
+  assert.equal(repaired.skipped, 1)
   assert.deepEqual(repaired.failedCategories, [])
-  assert.equal(stored?.["content"], "복구된 실제 본문")
-  assert.equal(stored?.["description"], "원문 발췌")
+  assert.equal(stored?.["content"], null)
+  assert.equal(stored?.["description"], null)
 })
 
 
@@ -329,16 +322,16 @@ test("기술 전체 조회는 네이버 IT와 다섯 기술 범주를 묶고 개
   const finder = mock.method(prisma.news, "findMany", async () => [])
   await getNews({ category: "tech" })
   const args = finder.mock.calls[0].arguments[0] as unknown as { where: Record<string, unknown> }
-  assert.deepEqual(args.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_TRANSLATION_FILTER, category: { in: ["105", ...TECH_NEWS_CATEGORY_VALUES] } })
+  assert.deepEqual(args.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_SUMMARY_FILTER, category: { in: ["105", ...TECH_NEWS_CATEGORY_VALUES] } })
   for (const category of TECH_NEWS_CATEGORY_VALUES) {
     assert.equal(newsQuerySchema.safeParse({ category }).success, true)
     assert.equal((await getNewsRoute(new NextRequest(`http://localhost/api/news?category=${category}`))).status, 200)
     const latest = finder.mock.calls.at(-1)!.arguments[0] as unknown as { where: Record<string, unknown> }
-    assert.deepEqual(latest.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_TRANSLATION_FILTER, category })
+    assert.deepEqual(latest.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_SUMMARY_FILTER, category })
   }
   await getNews({ category: "all" })
   const all = finder.mock.calls.at(-1)!.arguments[0] as unknown as { where: Record<string, unknown> }
-  assert.deepEqual(all.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_TRANSLATION_FILTER })
+  assert.deepEqual(all.where, { source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] }, ...PUBLISHED_SUMMARY_FILTER })
   assert.equal((await getNewsRoute(new NextRequest("http://localhost/api/news?category=tech"))).status, 200)
 })
 
@@ -415,13 +408,13 @@ test("네이버와 피드 모두 유효한 기사가 없으면 DB 저장 없이 
   assert.deepEqual(saved, [])
 })
 
-test("네이버와 다른 피드가 같은 원문을 제공하면 본문이 있는 기사 한 개로 저장한다", async () => {
+test("네이버와 다른 피드가 같은 링크를 제공하면 메타데이터 한 건만 저장한다", async () => {
   installFeedFixtures((_url, source) => source ? new Response(feedXml(source, [{ url: articleUrl, title: "같은 원문의 피드 제목" }])) : undefined)
   const result = await ingestLatestNews({ categories: ["105", "developer"], limitPerCategory: 1 })
   assert.equal(result.persisted, 1)
   assert.equal(result.fetched, 1)
   assert.equal(saved[0].sourceUrl, articleUrl)
-  assert.match(String(saved[0].content), /첫 문장 가/)
+  assert.equal(saved[0].content, null)
   assert.deepEqual(result.failedSources, [])
 })
 
@@ -480,10 +473,10 @@ test("개발 피드 목록은 커뮤니티 혼합 피드 대신 공식 제품 �
   assert.ok(TECH_FEED_SOURCES.every((source) => !/news\.hada\.io|news\.ycombinator\.com/.test(source.url)))
 })
 
-test("기존 커뮤니티 글은 상세에서도 제외하되 공식 기사와 DB 원본은 유지한다", async () => {
+test("기존 커뮤니티 글은 제외하고 공식 기사도 한국어 요약이 있어야 상세를 제공한다", async () => {
   let source = "GeekNews"
   Object.defineProperty(prisma.news, "findUnique", { configurable: true, writable: true,
-    value: async () => ({ id: "community-news", source, title: "Android Developer Verification Program", content: null }),
+    value: async () => ({ id: "community-news", source, category:"developer", title: "Android Developer Verification Program", content: null, sourceUrl:"https://devblogs.microsoft.com/visualstudio/test" }),
   })
   for (const excluded of EXCLUDED_COMMUNITY_SOURCES) {
     source = excluded
@@ -492,12 +485,28 @@ test("기존 커뮤니티 글은 상세에서도 제외하되 공식 기사와 D
     assert.equal(await getNewsDetail("community-news"), null)
   }
   source = "Microsoft Visual Studio"
+  assert.equal(await getNewsDetail("community-news"), null)
+  mock.method(prisma.newsTranslation,"findMany",async()=>[{newsId:"community-news",kind:CURATION_KIND,chunkIndex:0,status:"ready",sourceHash:getCurationHash({title:"Android Developer Verification Program",sourceUrl:"https://devblogs.microsoft.com/visualstudio/test"}),translatedText:JSON.stringify({selected:true,title:"개발자 확인 프로그램 공개",summary:"새로운 프로그램을 공개했습니다.",highlights:["한국어 핵심 내용"],sections:[],reason:"제품 발표",evidence:[]})}] as never)
   assert.equal((await getNewsDetail("community-news"))?.source, source)
   assert.equal((await getDetailRoute(new NextRequest("http://localhost/api/news/community-news"), { params: Promise.resolve({ id: "community-news" }) })).status, 200)
 })
 
+test("상세 API는 과거에 저장한 원문과 전문 번역을 응답에 포함하지 않는다", async () => {
+  const article = { id:"detail-test",source:"Cloudflare Blog",category:"infrastructure",title:"Original title",sourceUrl:"https://blog.cloudflare.com/test",description:"Original introduction",content:"Full original article body" }
+  Object.defineProperty(prisma.news,"findUnique",{configurable:true,value:async()=>article})
+  mock.method(prisma.newsTranslation,"findMany",async()=>[{newsId:article.id,kind:CURATION_KIND,chunkIndex:0,status:"ready",sourceHash:getCurationHash(article),translatedText:JSON.stringify({selected:true,title:"한국어 제목",summary:"한국어 요약입니다.",highlights:["한국어 핵심 내용"],sections:[],reason:"제품 발표",evidence:[]})}] as never)
+  const response=await getDetailRoute(new NextRequest("http://localhost/api/news/detail-test"),{params:Promise.resolve({id:article.id})})
+  assert.equal(response.status,200)
+  const data=await response.json()
+  assert.equal(data.title,"한국어 제목")
+  assert.equal(data.content,null)
+  assert.equal("translation" in data,false)
+  assert.equal(data.summary.selected,true)
+  assert.doesNotMatch(JSON.stringify(data),/Original introduction|Full original article body/)
+})
 
-test("신규 저장·빈 본문 보강·기존 중복을 별도로 집계한다", async () => {
+
+test("신규 메타데이터와 중복을 집계하며 원문 복구 건수는 늘리지 않는다", async () => {
   const urls = ["https://feeds.example.com/new", "https://feeds.example.com/repair", "https://feeds.example.com/duplicate"]
   installFeedFixtures((_url, source) => source ? new Response(feedXml(source, urls.map((url) => ({ url })))) : undefined)
   mock.method(prisma.news, "findFirst", async (args: unknown) => {
@@ -508,9 +517,9 @@ test("신규 저장·빈 본문 보강·기존 중복을 별도로 집계한다"
   Object.defineProperty(prisma.news, "update", { value: mock.fn(async () => ({})), configurable: true })
   const result = await ingestLatestNews({ categories: ["developer"], limitPerCategory: 3 })
   assert.equal(result.createdCount, 1)
-  assert.equal(result.repairedCount, 1)
-  assert.equal(result.skipped, 1)
-  assert.equal(result.persisted, 2)
+  assert.equal(result.repairedCount, 0)
+  assert.equal(result.skipped, 2)
+  assert.equal(result.persisted, 1)
   assert.equal(result.fetched, 3)
 })
 
@@ -543,18 +552,19 @@ test("기사 0건 수집 실패도 API의 실패 로그에 제외 사유를 남�
 })
 
 
-test("목록은 실제 본문 발췌만 제공하고 전체 본문과 상세 데이터는 목록에 섞지 않는다", async () => {
+test("목록은 한국어 요약만 제공하고 원문을 읽거나 발췌하지 않는다", async () => {
   const article = { id: "preview-article", title: "기사 제목", description: "기사 제목", source: "공식 출처", publishedAt: new Date(), category: "105", priority: 10 }
   const query = mock.method(prisma.news, "findMany", async () => [article] as never)
   mock.method(prisma.news, "count", async () => 1)
   const raw = mock.method(prisma, "$queryRaw", async () => [{ id: article.id, excerpt: "실제 첫 문단입니다.\n\n두 번째 문단" }] as never)
+  mock.method(prisma.newsTranslation, "findMany", async () => [{ newsId: article.id, kind: CURATION_KIND, status: "ready", sourceHash: getCurationHash(article), translatedText: JSON.stringify({ selected: true, title: "한국어 기사 제목", summary: "한국어로 요약한 내용입니다.", highlights: ["한국어 핵심 내용"], sections: [], evidence: [], reason: "새로운 소식" }) }] as never)
   const result = await getNews({ category: "105" })
-  assert.equal(result.news[0].preview, "실제 첫 문단입니다.")
-  assert.equal(result.news[0].previewType, "content")
+  assert.equal(result.news[0].preview, "한국어로 요약한 내용입니다.")
+  assert.equal(result.news[0].previewType, "summary")
   assert.equal("content" in result.news[0], false)
   assert.equal("description" in result.news[0], false)
   assert.equal((query.mock.calls[0].arguments[0] as { select: Record<string, boolean> }).select.content, undefined)
-  assert.ok(String((raw.mock.calls[0].arguments[0] as { sql: string }).sql).includes("LEFT(content, 1200)"))
+  assert.equal(raw.mock.calls.length, 0)
 })
 
 
@@ -586,7 +596,7 @@ test("기술 피드는 언어와 무관하게 선별 큐에 넣고 수집 요청
   await ingestLatestNews({categories:["engineering"],limitPerCategory:1})
   assert.equal(queued.mock.callCount(),TECH_FEED_SOURCES.filter(source=>source.category==="engineering").length)
   const jobs = queued.mock.calls[0].arguments[0]!.data as Array<{kind:string;status:string;newsId:string}>
-  assert.deepEqual(jobs.map((job)=>job.kind),["curation-v1"])
+  assert.deepEqual(jobs.map((job)=>job.kind),[CURATION_KIND])
   assert.equal(jobs.some((job)=>job.status==="pending"),true)
   assert.equal(jobs.every((job)=>Boolean(job.newsId)),true)
   assert.equal(requests.some((url)=>url.includes("generativelanguage.googleapis.com")),false)

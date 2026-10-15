@@ -12,11 +12,11 @@
     "prebuild": "prisma generate",
     "admin:sync": "tsx scripts/sync-admin.ts",
     "check": "npm test && npm run typecheck -- --incremental false && npm run lint && npm run build",
-    "translation:enqueue": "tsx scripts/translation-worker.ts --enqueue-only",
-    "translation:worker": "tsx scripts/translation-worker.ts",
-    "translation:drain": "tsx scripts/translation-worker.ts --drain",
-    "translation:status": "tsx scripts/translation-worker.ts --status",
-    "translation:check-models": "tsx scripts/check-translation-models.ts"
+    "summary:enqueue": "tsx scripts/summary-worker.ts --enqueue-only",
+    "summary:worker": "tsx scripts/summary-worker.ts",
+    "summary:drain": "tsx scripts/summary-worker.ts --drain",
+    "summary:status": "tsx scripts/summary-worker.ts --status",
+    "summary:check-models": "tsx scripts/check-summary-models.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

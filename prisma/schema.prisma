@@ -136,7 +136,7 @@ model BriefingDelivery {
 }
 
 
-// 원문 변경을 해시로 확인하고 전체 본문을 조각별로 이어서 번역합니다.
+// 한국어 요약 결과와 작업 예약을 저장합니다. 기존 테이블명을 재사용합니다.
 model NewsTranslation {
   id String @id @default(cuid())
   newsId String
@@ -155,7 +155,7 @@ model NewsTranslation {
   @@unique([newsId, kind, chunkIndex])
 }
 
-// 무료 프로젝트의 번역 요청만 집계합니다. 유료 프로젝트 여부는 계정에서 확인합니다.
+// 무료 프로젝트의 요약 요청을 집계합니다. 기존 사용량 기록을 보존합니다.
 model NewsTranslationUsage {
   dateKey String @db.VarChar(10)
   model String @default("gemini-3.5-flash-lite") @db.VarChar(64)

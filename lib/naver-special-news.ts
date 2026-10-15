@@ -125,10 +125,22 @@ async function fetchJson(url: string, signal?: AbortSignal): Promise<unknown> {
  * HTML 대신 공개 목록·본문 API를 사용하는 연예·스포츠 수집 경로입니다.
  * 스포츠는 공식 메뉴의 8개 종목 목록을 합쳐 최신 기사부터 선택합니다.
  */
+export async function fetchSpecialSummaryContent(sourceUrl: string, signal?: AbortSignal) {
+  const url = new URL(sourceUrl)
+  const ids = url.pathname.match(/^\/article\/(\d{1,20})\/(\d{1,20})\/?$/)
+  if (url.protocol !== "https:" || url.username || url.password || url.port || !ids ||
+    !["m.entertain.naver.com", "m.sports.naver.com"].includes(url.hostname)) return undefined
+  const host = url.hostname === "m.entertain.naver.com" ? "api-gw.entertain.naver.com" : "api-gw.sports.naver.com"
+  const detail = detailResponseSchema.parse(await fetchJson(`https://${host}/news/article/${ids[1]}/${ids[2]}`, signal)).result.articleInfo.article
+  if (detail.officeId !== ids[1] || detail.articleId !== ids[2]) throw new Error("요약할 기사 식별자가 다릅니다.")
+  return plainText(detail.refinedContent) || plainText(detail.content) || undefined
+}
+
 export async function fetchSpecialNews(
   category: "106" | "107",
   limit: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  metadataOnly = false
 ): Promise<{ articles: SpecialArticle[]; partial: boolean; received: number; excluded: number; limited: number; reasons: Record<string, number> }> {
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
     throw new RangeError("수집 수량은 1~50 사이의 정수여야 합니다.")
@@ -220,6 +232,9 @@ export async function fetchSpecialNews(
     .slice(0, limit)
   const limited = unique.size - selected.length
   if (selected.length === 0) return { articles: [], partial: true, received, excluded, limited, reasons }
+  if (metadataOnly) return { articles: selected.map((item) => ({ title: item.title, sourceUrl: item.sourceUrl,
+    source: item.source, category: item.category, publishedAt: item.publishedAt, imageUrl: item.imageUrl })),
+    partial, received, excluded, limited, reasons }
 
   const articles: SpecialArticle[] = []
   for (let offset = 0; offset < selected.length; offset += 3) {

@@ -2,8 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { EXCLUDED_COMMUNITY_SOURCES } from "@/lib/feed-sources"
 import { getRequestUser } from "@/lib/request-auth"
-import { getArticleTranslation, getListTranslations } from "@/lib/news-translation"
-import { isCurationArticle } from "@/lib/news-curation"
+import { getArticleSummary, getListSummaries } from "@/lib/news-summary-service"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!news || EXCLUDED_COMMUNITY_SOURCES.includes(news.source)) {
       return NextResponse.json({ error: "뉴스를 찾을 수 없습니다." }, { status: 404 })
     }
-    if (isCurationArticle(news) && !(await getListTranslations([news])).has(news.id)) {
+    if (!(await getListSummaries([news])).get(news.id)?.isSummary) {
       return NextResponse.json({ error: "뉴스를 찾을 수 없습니다." }, { status: 404 })
     }
 
@@ -46,7 +45,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    return NextResponse.json({ ...news, translation: await getArticleTranslation(news) }, { headers: { "Cache-Control": "no-store" } })
+    const result = await getArticleSummary(news)
+    return NextResponse.json({ ...news, title: result.title || news.title,
+      description: result.preview, content: null, summary: result.summary }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     console.error("Error fetching news detail:", error)
     return NextResponse.json({ error: "뉴스 상세 정보를 불러올 수 없습니다." }, { status: 500 })

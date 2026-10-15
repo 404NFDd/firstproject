@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email-service"
 import { summarizeNewsByCategory, formatSummarizedNewsHTML } from "@/lib/ai-summary"
 import { escapeHtml } from "@/lib/html"
-import { PUBLISHED_TRANSLATION_FILTER, getListTranslations } from "@/lib/news-translation"
+import { PUBLISHED_SUMMARY_FILTER, getListSummaries } from "@/lib/news-summary-service"
 import { isCurationArticle } from "@/lib/news-curation"
 
 /**
@@ -22,7 +22,7 @@ export async function getDailyNews() {
   const news = await prisma.news.findMany({
     where: {
       source: { notIn: [...EXCLUDED_COMMUNITY_SOURCES] },
-      ...PUBLISHED_TRANSLATION_FILTER,
+      ...PUBLISHED_SUMMARY_FILTER,
       publishedAt: {
         gte: yesterday,
         lte: today,
@@ -35,10 +35,11 @@ export async function getDailyNews() {
     take: 50, // 상위 50개 기사만 선택
   })
 
-  const curated = await getListTranslations(news.filter(isCurationArticle))
+  const curated = await getListSummaries(news.filter(isCurationArticle))
   return news.map((article) => {
     const summary = curated.get(article.id)
-    return summary?.isSummary ? { ...article, title: summary.title, curatedSummary: summary.preview } : article
+    return summary?.isSummary ? { ...article, title: summary.title, description: null, content: null, curatedSummary: summary.preview }
+      : { ...article, description: null, content: null }
   })
 }
 

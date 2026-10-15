@@ -6,7 +6,8 @@ import type { News } from "@prisma/client"
 import { prisma } from "../lib/prisma"
 import { generateAccessToken } from "../lib/auth"
 import { getSafeNewsUrl } from "../lib/news-links"
-import { PUBLISHED_TRANSLATION_FILTER } from "../lib/news-translation"
+import { PUBLISHED_SUMMARY_FILTER } from "../lib/news-summary-service"
+import { CURATION_KIND, getCurationHash } from "../lib/news-curation"
 
 const previousAccessSecret = process.env.JWT_ACCESS_SECRET
 const previousSmtpHost = process.env.SMTP_HOST
@@ -170,7 +171,7 @@ test("기사 메일은 ID 중복을 제거하고 HTML을 이스케이프하며 S
     newsIds: ["news-a", " news-a ", "news-b"], title: "  공유 제목  ",
   }))
   assert.equal(response.status, 200)
-  assert.deepEqual(findNews.mock.calls[0].arguments[0], { where: { source: { notIn: ["GeekNews", "Hacker News"] }, ...PUBLISHED_TRANSLATION_FILTER, id: { in: ["news-a", "news-b"] } } })
+  assert.deepEqual(findNews.mock.calls[0].arguments[0], { where: { source: { notIn: ["GeekNews", "Hacker News"] }, ...PUBLISHED_SUMMARY_FILTER, id: { in: ["news-a", "news-b"] } } })
   assert.equal(sendMail.mock.callCount(), 1)
   const mail = sendMail.mock.calls[0].arguments[0] as SendMailOptions
   assert.equal(mail.to, "user@example.invalid")
@@ -186,7 +187,7 @@ test("기사 원문 URL은 절대 웹 주소만 허용하고 스크립트·상�
   }
 })
 
-test("선택 기사 메일은 원문 발췌·제목만 제공을 구분하고 안전한 원문 링크와 한국 발행시각을 담는다", async (context) => {
+test("선택 기사 메일은 한국어 요약을 제공하고 원문 발췌를 제외하며 출처와 한국 시각을 담는다", async (context) => {
   const article: News = {
     id: "news-a", title: "Node.js &amp; 도구", description: "버전 변경 안내", content: null,
     imageUrl: null, sourceUrl: "https://example.com/news?a=1&b=2", source: "공식 &amp; 발표", author: null,
@@ -194,23 +195,25 @@ test("선택 기사 메일은 원문 발췌·제목만 제공을 구분하고 �
     createdAt: new Date("2026-10-01T00:00:00Z"), updatedAt: new Date("2026-10-01T00:00:00Z"),
   }
   context.mock.method(prisma.user, "findUnique", (() => Promise.resolve({ email: "user@example.invalid" })) as unknown as typeof prisma.user.findUnique)
-  context.mock.method(prisma.news, "findMany", (() => Promise.resolve([
+  const articles = [
     article, { ...article, id: "news-b", title: "제목만 있는 기사", description: null, sourceUrl: "javascript:alert(1)" },
     { ...article, id: "news-c", description: null, content: "본문의 첫 문장", sourceUrl: null },
     { ...article, id: "news-d", category: "engineering", sourceUrl: "https://d2.naver.com/helloworld/123" },
-  ])) as unknown as typeof prisma.news.findMany)
+  ]
+  context.mock.method(prisma.news, "findMany", (() => Promise.resolve(articles)) as unknown as typeof prisma.news.findMany)
+  context.mock.method(prisma.newsTranslation,"findMany",async()=>[articles[0],articles[3]].map((item)=>({newsId:item.id,kind:CURATION_KIND,status:"ready",sourceHash:getCurationHash(item),translatedText:JSON.stringify({selected:true,title:"한국어로 정리한 제품 소식",summary:"한국어로 정리한 요약입니다.",highlights:["한국어 핵심 내용"],sections:[],reason:"제품 발표",evidence:[]})})) as never)
   const response = await sendNews(request("/api/news/send-email", { newsIds: ["news-a", "news-b", "news-c", "news-d"] }))
   assert.equal(response.status, 200)
   const html = String(sendMail.mock.calls[0].arguments[0].html)
-  assert.match(html, /IT·과학 · 원문 발췌/)
-  assert.match(html, /엔지니어링 · 원문 발췌/)
+  assert.match(html, /IT·과학 · AI 요약/)
+  assert.match(html, /엔지니어링 · AI 요약/)
   assert.match(html, /게시·갱신:/)
   assert.match(html, />출처에서 읽기<\/a>/)
   assert.match(html, /제목만 제공/)
-  assert.match(html, /본문 발췌/)
+  assert.match(html, /한국어로 정리한 요약입니다/)
   assert.match(html, /href="https:\/\/example\.com\/news\?a=1&amp;b=2"/)
   assert.match(html, /2026년 10월 1일/)
   assert.match(html, /한국 시간/)
   assert.match(html, /원문 링크를 확인할 수 없습니다/)
-  assert.doesNotMatch(html, /javascript:|&amp;amp;|AI 요약/)
+  assert.doesNotMatch(html, /javascript:|&amp;amp;|원문 발췌|본문 발췌|본문의 첫 문장|버전 변경 안내/)
 })

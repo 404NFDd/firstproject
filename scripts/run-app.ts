@@ -5,7 +5,7 @@ import { join } from "node:path"
 const resolveModule = createRequire(join(process.cwd(), "package.json"))
 const mode = process.argv[2]
 if (mode !== "dev" && mode !== "start") throw new Error("dev 또는 start 실행 모드가 필요합니다.")
-const worker = spawn(process.execPath, ["--import", "tsx", join(process.cwd(), "scripts/translation-worker.ts")], { stdio: "inherit" })
+const worker = spawn(process.execPath, ["--import", "tsx", join(process.cwd(), "scripts/summary-worker.ts")], { stdio: "inherit" })
 const web = spawn(process.execPath, [resolveModule.resolve("next/dist/bin/next"), mode, ...process.argv.slice(3)], { stdio: "inherit" })
 let stopping = false
 function stop(code: number) {

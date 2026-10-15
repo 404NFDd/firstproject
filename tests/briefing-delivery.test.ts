@@ -2,11 +2,12 @@ import assert from "node:assert/strict"
 import { after, afterEach, before, beforeEach, mock, test } from "node:test"
 import nodemailer from "nodemailer"
 import { prisma } from "../lib/prisma"
+import { CURATION_KIND, getCurationHash } from "../lib/news-curation"
 
 let sendDailyBriefing: typeof import("../lib/daily-briefing").sendDailyBriefing
 let getBriefingDateKey: typeof import("../lib/daily-briefing").getBriefingDateKey
 let markInterruptedBriefings: typeof import("../lib/daily-briefing").markInterruptedBriefings
-const originals = { user: prisma.user, news: prisma.news, briefingDelivery: prisma.briefingDelivery }
+const originals = { user: prisma.user, news: prisma.news, newsTranslation: prisma.newsTranslation, briefingDelivery: prisma.briefingDelivery }
 const env = { SMTP_HOST: process.env.SMTP_HOST, GEMINI_API_KEY: process.env.GEMINI_API_KEY }
 const originalTransport = nodemailer.createTransport
 let sendMail: (options: { to: string }) => Promise<unknown>
@@ -30,6 +31,10 @@ beforeEach(() => {
   Object.defineProperty(prisma, "news", { configurable: true, writable: true, value: { findMany: async () => [{
     id: "news", title: "확인한 기사", description: "실제 소개", content: null,
     category: "100", source: "공식 출처", publishedAt: new Date(),
+  }] } })
+  Object.defineProperty(prisma, "newsTranslation", { configurable: true, writable: true, value: { findMany: async () => [{
+    newsId: "news", kind: CURATION_KIND, status: "ready", sourceHash: getCurationHash({title:"확인한 기사",content:null}),
+    translatedText: JSON.stringify({selected:true,title:"확인한 기사",summary:"한국어로 정리한 기사 요약입니다.",highlights:["핵심 내용입니다."],sections:[],reason:"새로운 소식",evidence:[]}),
   }] } })
   Object.defineProperty(prisma, "briefingDelivery", { configurable: true, writable: true, value: {
     create: async ({ data }: { data: { userId: string; dateKey: string } }) => {
