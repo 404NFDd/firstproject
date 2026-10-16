@@ -227,7 +227,7 @@ export default function NewsDetailPage() {
               src={news.imageUrl || "/placeholder.svg"}
               alt={decodedTitle}
               fill
-              className="object-cover"
+              className="object-scale-down"
               sizes="(max-width: 768px) 100vw, 768px"
               priority
             />
